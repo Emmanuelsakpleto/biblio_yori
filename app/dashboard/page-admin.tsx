@@ -19,7 +19,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfig } from '../../contexts/ConfigContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
-import { loanService, notificationService, adminService, utils } from '../../lib/api';
+import { loanService, notificationService, utils } from '../../lib/api';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -69,56 +69,24 @@ export default function DashboardPage() {
   const isAdmin = user?.role === 'admin' || user?.role === 'librarian';
 
   useEffect(() => {
-    // Attendre que l'AuthContext soit complètement chargé
-    if (!loading && user) {
-      // Test API au démarrage
-      testApiConnection();
-      loadDashboardData();
-    }
-  }, [isAdmin, loading, user]);
+    loadDashboardData();
+  }, [isAdmin]);
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
       
-      // Debug: Vérifier l'authentification
-      const token = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
-      console.log('Token présent:', !!token);
-      console.log('User présent:', !!storedUser);
-      console.log('User role:', user?.role);
-      console.log('Is admin:', isAdmin);
-      
       if (isAdmin) {
-        // Statistiques administrateur depuis l'API
-        try {
-          console.log('Tentative de chargement des stats admin...');
-          const dashboardResponse = await adminService.getDashboard();
-          if (dashboardResponse.success && dashboardResponse.data) {
-            console.log('Stats admin chargées:', dashboardResponse.data);
-            setAdminStats({
-              totalUsers: dashboardResponse.data.totalUsers,
-              totalBooks: dashboardResponse.data.totalBooks,
-              activeLoans: dashboardResponse.data.activeLoans,
-              overdueLoans: dashboardResponse.data.overdueLoans,
-              pendingReturns: dashboardResponse.data.pendingReturns,
-              newUsersThisWeek: dashboardResponse.data.newUsersThisWeek
-            });
-          }
-        } catch (error) {
-          console.error('Erreur lors du chargement des statistiques admin:', error);
-          // Fallback avec des données simulées
-          setAdminStats({
-            totalUsers: 150,
-            totalBooks: 1250,
-            activeLoans: 89,
-            overdueLoans: 12,
-            pendingReturns: 8,
-            newUsersThisWeek: 5
-          });
-        }
+        // Statistiques administrateur (simulées pour le moment)
+        setAdminStats({
+          totalUsers: 150,
+          totalBooks: 1250,
+          activeLoans: 89,
+          overdueLoans: 12,
+          pendingReturns: 8,
+          newUsersThisWeek: 5
+        });
       } else {
-        console.log('Chargement des données étudiant...');
         // Données pour les étudiants
         const loansResponse = await loanService.getMyLoans();
         if (loansResponse.success && loansResponse.data) {
@@ -177,36 +145,6 @@ export default function DashboardPage() {
     if (hour < 12) return 'Bonjour';
     if (hour < 18) return 'Bon après-midi';
     return 'Bonsoir';
-  };
-
-  // Fonction de test pour vérifier la connectivité API
-  const testApiConnection = async () => {
-    try {
-      console.log('Test de connexion API...');
-      const response = await fetch('http://localhost:5000/api/test');
-      const data = await response.json();
-      console.log('API accessible:', data);
-      
-      // Test des routes auth
-      const token = localStorage.getItem('token');
-      if (token) {
-        const authResponse = await fetch('http://localhost:5000/api/auth/profile', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        console.log('Auth test status:', authResponse.status);
-        if (authResponse.ok) {
-          const authData = await authResponse.json();
-          console.log('Auth test data:', authData);
-        } else {
-          console.log('Auth test failed:', await authResponse.text());
-        }
-      }
-    } catch (error) {
-      console.error('Erreur de connexion API:', error);
-    }
   };
 
   if (!user) return null;

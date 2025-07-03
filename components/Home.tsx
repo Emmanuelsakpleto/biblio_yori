@@ -143,8 +143,14 @@ const Home = () => {
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-accent-secondary)] to-[var(--color-hover-secondary)] flex items-center justify-center mb-6 shadow-lg">
                   {user?.role === 'admin' ? <Users className="w-8 h-8 text-white" /> : <GraduationCap className="w-8 h-8 text-white" />}
                 </div>
-                <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">{user?.role === 'admin' ? 'Administration' : 'Mon Espace'}</h3>
-                <p className="text-[var(--color-text-secondary)] mb-6">{user?.role === 'admin' ? 'Gérez les utilisateurs, les livres et les emprunts' : 'Accédez à vos emprunts, réservations et profil'}</p>
+                <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">
+                  {user?.role === 'admin' || user?.role === 'librarian' ? 'Administration' : 'Mon Espace'}
+                </h3>
+                <p className="text-[var(--color-text-secondary)] mb-6">
+                  {user?.role === 'admin' || user?.role === 'librarian' 
+                    ? 'Gérez les utilisateurs, les livres et surveillez les statistiques' 
+                    : 'Accédez à vos emprunts, réservations et profil'}
+                </p>
                 <div className="flex items-center text-[var(--color-accent-primary)] font-semibold group-hover:translate-x-2 transition-transform duration-300">
                   Explorer <ArrowRight className="ml-2 w-5 h-5" />
                 </div>

@@ -9,7 +9,14 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: { email: string; password: string; first_name: string; last_name: string }) => Promise<void>;
+  register: (userData: { 
+    email: string; 
+    password: string; 
+    first_name: string; 
+    last_name: string;
+    phone?: string;
+    department?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -28,24 +35,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const storedUser = localStorage.getItem('user');
         const storedToken = localStorage.getItem('token');
         
+        console.log('InitAuth - User dans localStorage:', storedUser);
+        console.log('InitAuth - Token dans localStorage:', storedToken ? 'présent' : 'absent');
+        
         if (storedUser && storedToken) {
+          console.log('Utilisateur trouvé dans localStorage:', JSON.parse(storedUser));
           setUser(JSON.parse(storedUser));
           setToken(storedToken);
           
           // Vérifier si le token est toujours valide
           try {
+            console.log('Vérification du token...');
             const profileResponse = await authService.profile();
             if (profileResponse.success && profileResponse.data) {
+              console.log('Token valide, utilisateur:', profileResponse.data);
               setUser(profileResponse.data);
               localStorage.setItem('user', JSON.stringify(profileResponse.data));
             }
           } catch (error) {
+            console.log('Token invalide, nettoyage du localStorage:', error);
             // Token invalide, nettoyer
             localStorage.removeItem('user');
             localStorage.removeItem('token');
             setUser(null);
             setToken(null);
           }
+        } else {
+          console.log('Aucun utilisateur trouvé dans localStorage');
         }
       } catch (error) {
         console.error('Erreur lors de l\'initialisation de l\'authentification:', error);
@@ -63,24 +79,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await authService.login({ email, password });
       if (response.success && response.data) {
-        setUser(response.data.user);
-        setToken(response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('token', response.data.token);
+        // Gestion de l'ancienne et nouvelle structure de réponse
+        const user = response.data.user;
+        const token = response.data.tokens?.accessToken || response.data.token;
+        
+        if (token) {
+          setUser(user);
+          setToken(token);
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('token', token);
+        }
       }
     } catch (error) {
       throw error;
     }
   };
 
-  const register = async (userData: { email: string; password: string; first_name: string; last_name: string }) => {
+  const register = async (userData: { 
+    email: string; 
+    password: string; 
+    first_name: string; 
+    last_name: string;
+    phone?: string;
+    department?: string;
+  }) => {
     try {
       const response = await authService.register(userData);
       if (response.success && response.data) {
-        setUser(response.data.user);
-        setToken(response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('token', response.data.token);
+        // Gestion de l'ancienne et nouvelle structure de réponse
+        const user = response.data.user;
+        const token = response.data.tokens?.accessToken || response.data.token;
+        
+        if (token) {
+          setUser(user);
+          setToken(token);
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('token', token);
+        }
       }
     } catch (error) {
       throw error;

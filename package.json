@@ -18,6 +18,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.2.14",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@types/yup": "^0.29.14",
     "class-variance-authority": "^0.7.1",
     "framer-motion": "^12.23.0",
     "jwt-decode": "^4.0.0",
@@ -28,7 +29,8 @@
     "react-dom": "^18",
     "react-toastify": "^11.0.5",
     "reactjs-editor": "^10.0.1",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@types/node": "^20",

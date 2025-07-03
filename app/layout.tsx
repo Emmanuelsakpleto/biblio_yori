@@ -44,12 +44,6 @@ export default function RootLayout({
   return (
     <html lang="fr" className="smooth-scroll">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link 
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" 
-          rel="stylesheet" 
-        />
         <meta name="theme-color" content="#1e293b" />
         <meta name="color-scheme" content="light dark" />
       </head>

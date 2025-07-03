@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
-import { Eye, EyeOff, Mail, Lock, User, BookOpen, Sparkles, GraduationCap, Library, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, BookOpen, Sparkles, GraduationCap, Library, ArrowRight, Phone, Building } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { loginSchema, registerSchema, LoginFormData, RegisterFormData } from '../../lib/validations';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,11 +14,15 @@ export default function AuthPage() {
     password: '',
     first_name: '',
     last_name: '',
+    phone_country: '+33',
+    phone_number: '',
+    department: '',
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const { login, register, user, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -31,23 +36,38 @@ export default function AuthPage() {
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (error) setError('');
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
-  const validateForm = () => {
-    if (!formData.email || !formData.password) {
-      throw new Error('Email et mot de passe requis');
-    }
-
-    if (!isLogin) {
-      if (!formData.first_name || !formData.last_name) {
-        throw new Error('Prénom et nom requis');
+  const validateForm = async () => {
+    try {
+      setFieldErrors({});
+      
+      if (isLogin) {
+        await loginSchema.validate({
+          email: formData.email,
+          password: formData.password
+        }, { abortEarly: false });
+      } else {
+        await registerSchema.validate(formData, { abortEarly: false });
       }
-      if (formData.password !== formData.confirmPassword) {
-        throw new Error('Les mots de passe ne correspondent pas');
+      
+      return true;
+    } catch (validationError: any) {
+      const errors: Record<string, string> = {};
+      
+      if (validationError.inner) {
+        validationError.inner.forEach((error: any) => {
+          if (error.path) {
+            errors[error.path] = error.message;
+          }
+        });
       }
-      if (formData.password.length < 6) {
-        throw new Error('Le mot de passe doit contenir au moins 6 caractères');
-      }
+      
+      setFieldErrors(errors);
+      return false;
     }
   };
 
@@ -57,17 +77,25 @@ export default function AuthPage() {
     setError('');
 
     try {
-      validateForm();
+      // Validation du formulaire
+      const isValid = await validateForm();
+      if (!isValid) {
+        setLoading(false);
+        return;
+      }
 
       if (isLogin) {
         await login(formData.email, formData.password);
         router.push('/');
       } else {
+        const phoneNumber = formData.phone_country + formData.phone_number;
         await register({
           email: formData.email,
           password: formData.password,
           first_name: formData.first_name,
-          last_name: formData.last_name
+          last_name: formData.last_name,
+          phone: phoneNumber,
+          department: formData.department
         });
         router.push('/');
       }
@@ -85,14 +113,35 @@ export default function AuthPage() {
       password: '',
       first_name: '',
       last_name: '',
+      phone_country: '+33',
+      phone_number: '',
+      department: '',
       confirmPassword: ''
     });
     setError('');
+    setFieldErrors({});
   };
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
     resetForm();
+  };
+
+  // Helper pour afficher les erreurs de champ
+  const renderFieldError = (fieldName: string) => {
+    if (fieldErrors[fieldName]) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
+          className="text-red-500 text-xs mt-1 ml-1"
+        >
+          {fieldErrors[fieldName]}
+        </motion.div>
+      );
+    }
+    return null;
   };
 
   // Identifiants prédéfinis pour connexion rapide
@@ -288,29 +337,122 @@ export default function AuthPage() {
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="grid grid-cols-2 gap-4"
+                      className="space-y-4"
                     >
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                        <input
-                          type="text"
-                          placeholder="Prénom"
-                          value={formData.first_name}
-                          onChange={(e) => handleInputChange('first_name', e.target.value)}
-                          className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
-                          required={!isLogin}
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="relative">
+                          <label className="absolute left-12 top-3 text-xs text-slate-500 font-normal transition-all duration-200 pointer-events-none z-10">
+                            Prénom
+                          </label>
+                          <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 z-10" />
+                          <input
+                            type="text"
+                            placeholder="Jean"
+                            value={formData.first_name}
+                            onChange={(e) => handleInputChange('first_name', e.target.value)}
+                            className={`w-full pl-12 pr-4 pt-7 pb-3 h-14 bg-[var(--glass-bg)] backdrop-blur-sm border rounded-2xl text-[var(--color-text-primary)] placeholder-slate-400 placeholder:text-sm focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium text-sm ${
+                              fieldErrors.first_name 
+                                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                                : 'border-[var(--glass-border)]'
+                            }`}
+                            required={!isLogin}
+                          />
+                          {renderFieldError('first_name')}
+                        </div>
+                        <div className="relative">
+                          <label className="absolute left-12 top-3 text-xs text-slate-500 font-normal transition-all duration-200 pointer-events-none z-10">
+                            Nom
+                          </label>
+                          <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 z-10" />
+                          <input
+                            type="text"
+                            placeholder="Dupont"
+                            value={formData.last_name}
+                            onChange={(e) => handleInputChange('last_name', e.target.value)}
+                            className={`w-full pl-12 pr-4 pt-7 pb-3 h-14 bg-[var(--glass-bg)] backdrop-blur-sm border rounded-2xl text-[var(--color-text-primary)] placeholder-slate-400 placeholder:text-sm focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium text-sm ${
+                              fieldErrors.last_name 
+                                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                                : 'border-[var(--glass-border)]'
+                            }`}
+                            required={!isLogin}
+                          />
+                          {renderFieldError('last_name')}
+                        </div>
                       </div>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                        <input
-                          type="text"
-                          placeholder="Nom"
-                          value={formData.last_name}
-                          onChange={(e) => handleInputChange('last_name', e.target.value)}
-                          className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
-                          required={!isLogin}
-                        />
+                      
+                      <div className="space-y-4">
+                        {/* Téléphone avec indicatif et numéro séparés */}
+                        <div className="relative">
+                          <label className="absolute left-4 top-1 text-xs text-slate-500 font-normal bg-white px-2 rounded z-20">
+                            Téléphone
+                          </label>
+                          <div className="flex gap-3 pt-3">
+                            <div className="relative w-24">
+                              <input
+                                type="text"
+                                placeholder="+33"
+                                value={formData.phone_country}
+                                onChange={(e) => {
+                                  // Garder le format +xxx
+                                  let value = e.target.value;
+                                  if (!value.startsWith('+')) {
+                                    value = '+' + value.replace(/\D/g, '');
+                                  } else {
+                                    value = '+' + value.slice(1).replace(/\D/g, '');
+                                  }
+                                  handleInputChange('phone_country', value);
+                                }}
+                                className={`w-full px-3 py-4 h-14 bg-[var(--glass-bg)] backdrop-blur-sm border rounded-2xl text-[var(--color-text-primary)] placeholder-slate-400 placeholder:text-sm text-sm focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium text-center ${
+                                  fieldErrors.phone_country 
+                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                                    : 'border-[var(--glass-border)]'
+                                }`}
+                                maxLength={4}
+                              />
+                            </div>
+                            <div className="relative flex-1">
+                              <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 z-10" />
+                              <input
+                                type="tel"
+                                placeholder="612345678"
+                                value={formData.phone_number}
+                                onChange={(e) => {
+                                  // Ne garder que les chiffres
+                                  const numbersOnly = e.target.value.replace(/\D/g, '');
+                                  handleInputChange('phone_number', numbersOnly);
+                                }}
+                                className={`w-full pl-12 pr-4 py-4 h-14 bg-[var(--glass-bg)] backdrop-blur-sm border rounded-2xl text-[var(--color-text-primary)] placeholder-slate-400 placeholder:text-sm text-sm focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium ${
+                                  fieldErrors.phone_number 
+                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                                    : 'border-[var(--glass-border)]'
+                                }`}
+                                maxLength={12}
+                              />
+                            </div>
+                          </div>
+                          {renderFieldError('phone_country')}
+                          {renderFieldError('phone_number')}
+                        </div>
+                        
+                        {/* Département */}
+                        <div className="relative">
+                          <label className="absolute left-12 top-3 text-xs text-slate-500 font-normal transition-all duration-200 pointer-events-none z-10">
+                            Département
+                          </label>
+                          <GraduationCap className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 z-10" />
+                          <input
+                            type="text"
+                            placeholder="Informatique"
+                            value={formData.department}
+                            onChange={(e) => handleInputChange('department', e.target.value)}
+                            className={`w-full pl-12 pr-4 pt-7 pb-3 h-14 bg-[var(--glass-bg)] backdrop-blur-sm border rounded-2xl text-[var(--color-text-primary)] placeholder-slate-400 placeholder:text-sm text-sm focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium ${
+                              fieldErrors.department 
+                                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                                : 'border-[var(--glass-border)]'
+                            }`}
+                          />
+                          {renderFieldError('department')}
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -318,35 +460,51 @@ export default function AuthPage() {
 
                 {/* Email */}
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <label className="absolute left-12 top-3 text-xs text-slate-500 font-normal transition-all duration-200 pointer-events-none z-10">
+                    Email
+                  </label>
+                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 z-10" />
                   <input
                     type="email"
-                    placeholder="Adresse e-mail universitaire"
+                    placeholder="jean.dupont@universite.fr"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
+                    className={`w-full pl-12 pr-4 pt-7 pb-3 h-14 bg-[var(--glass-bg)] backdrop-blur-sm border rounded-2xl text-[var(--color-text-primary)] placeholder-slate-400 placeholder:text-sm text-sm focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium ${
+                      fieldErrors.email 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                        : 'border-[var(--glass-border)]'
+                    }`}
                     required
                   />
+                  {renderFieldError('email')}
                 </div>
 
                 {/* Mot de passe */}
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <label className="absolute left-12 top-3 text-xs text-slate-500 font-normal transition-all duration-200 pointer-events-none z-10">
+                    Mot de passe
+                  </label>
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 z-10" />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Mot de passe sécurisé"
+                    placeholder={isLogin ? "Votre mot de passe" : "8+ caractères avec majuscule, chiffre, symbole"}
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    className="w-full pl-12 pr-12 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
+                    className={`w-full pl-12 pr-12 pt-7 pb-3 h-14 bg-[var(--glass-bg)] backdrop-blur-sm border rounded-2xl text-[var(--color-text-primary)] placeholder-slate-400 placeholder:text-sm text-sm focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium ${
+                      fieldErrors.password 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                        : 'border-[var(--glass-border)]'
+                    }`}
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors duration-200 p-1"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors duration-200 p-1 z-10"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
+                  {renderFieldError('password')}
                 </div>
 
                 {/* Confirmation mot de passe pour inscription */}
@@ -359,15 +517,23 @@ export default function AuthPage() {
                       transition={{ duration: 0.3 }}
                       className="relative"
                     >
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                      <label className="absolute left-12 top-3 text-xs text-slate-500 font-normal transition-all duration-200 pointer-events-none z-10">
+                        Confirmation
+                      </label>
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 z-10" />
                       <input
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="Confirmer le mot de passe"
+                        placeholder="Confirmez votre mot de passe"
                         value={formData.confirmPassword}
                         onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
+                        className={`w-full pl-12 pr-4 pt-7 pb-3 h-14 bg-[var(--glass-bg)] backdrop-blur-sm border rounded-2xl text-[var(--color-text-primary)] placeholder-slate-400 placeholder:text-sm text-sm focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium ${
+                          fieldErrors.confirmPassword 
+                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                            : 'border-[var(--glass-border)]'
+                        }`}
                         required={!isLogin}
                       />
+                      {renderFieldError('confirmPassword')}
                     </motion.div>
                   )}
                 </AnimatePresence>

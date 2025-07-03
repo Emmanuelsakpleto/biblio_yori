@@ -17,7 +17,11 @@ interface ApiResponse<T> {
 
 interface LoginResponse {
   user: UserProfile;
-  token: string;
+  token?: string; // Ancienne structure
+  tokens?: { // Nouvelle structure
+    accessToken: string;
+    refreshToken: string;
+  };
   refreshToken?: string;
 }
 
@@ -87,11 +91,22 @@ interface Review {
 // Utilitaire pour les requêtes authentifiées
 const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-    ...options.headers,
-  };
+  
+  // Construction des headers
+  const headers: Record<string, string> = {};
+  
+  // Ajout du Content-Type seulement si ce n'est pas une FormData
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+  
+  // Ajout du token d'authentification
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  // Fusion avec les headers personnalisés
+  Object.assign(headers, options.headers);
 
   const response = await fetch(`${API_URL}${url}`, {
     ...options,
@@ -99,11 +114,11 @@ const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
   });
 
   if (!response.ok) {
-    if (response.status === 401) {
-      // Token expiré, rediriger vers la connexion
+    if (response.status === 401 || response.status === 403) {
+      // Token expiré ou invalide, nettoyer le localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/';
+      // Ne pas rediriger automatiquement, laisser les composants gérer la redirection
       throw new Error('Session expirée');
     }
     throw new Error(`Erreur HTTP: ${response.status}`);
@@ -189,6 +204,207 @@ export const bookService = {
 
   async getAuthors(): Promise<ApiResponse<string[]>> {
     return authenticatedFetch('/books/authors');
+  },
+
+  // Services CRUD Admin
+  async createBook(data: {
+    title: string;
+    author: string;
+    isbn?: string;
+    publisher?: string;
+    publication_year?: number;
+    category: string;
+    description?: string;
+    total_copies: number;
+    available_copies?: number;
+    language?: string;
+    pages?: number;
+    location?: string;
+    tags?: string[];
+  }, coverFile?: File | null, pdfFile?: File | null): Promise<ApiResponse<Book>> {
+    const formData = new FormData();
+    
+    // Ajout des données du livre
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value.toString());
+        }
+      }
+    });
+    
+    // Ajout des fichiers si fournis
+    if (coverFile) {
+      formData.append('cover_image', coverFile);
+    }
+    if (pdfFile) {
+      formData.append('pdf_file', pdfFile);
+    }
+
+    return authenticatedFetch('/books', {
+      method: 'POST',
+      body: formData
+    });
+  },
+
+  async updateBook(id: number, data: {
+    title?: string;
+    author?: string;
+    isbn?: string;
+    publisher?: string;
+    publication_year?: number;
+    category?: string;
+    description?: string;
+    total_copies?: number;
+    available_copies?: number;
+    language?: string;
+    pages?: number;
+    location?: string;
+    tags?: string[];
+  }, coverFile?: File | null, pdfFile?: File | null): Promise<ApiResponse<Book>> {
+    
+    // Si on a des fichiers, utiliser FormData
+    if (coverFile || pdfFile) {
+      const formData = new FormData();
+      
+      // Ajout des données du livre
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value.toString());
+          }
+        }
+      });
+      
+      // Ajout des fichiers si fournis
+      if (coverFile) {
+        formData.append('cover_image', coverFile);
+      }
+      if (pdfFile) {
+        formData.append('pdf_file', pdfFile);
+      }
+
+      return authenticatedFetch(`/books/${id}`, {
+        method: 'PUT',
+        body: formData
+      });
+    } else {
+      // Sinon, utiliser JSON
+      return authenticatedFetch(`/books/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+    }
+  },
+
+  async deleteBook(id: number): Promise<ApiResponse<void>> {
+    return authenticatedFetch(`/books/${id}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async uploadBookCover(id: number, file: File): Promise<ApiResponse<{ cover_image: string }>> {
+    const formData = new FormData();
+    formData.append('cover_image', file);
+    
+    const token = localStorage.getItem('token');
+    return fetch(`${API_URL}/books/${id}/cover`, {
+      method: 'POST',
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: formData
+    }).then(res => res.json());
+  },
+
+  async createBookWithFiles(data: {
+    title: string;
+    author: string;
+    isbn?: string;
+    publisher?: string;
+    publication_year?: number;
+    category: string;
+    description?: string;
+    total_copies: number;
+    language?: string;
+    pages?: number;
+    location?: string;
+  }, files?: {
+    cover_image?: File;
+    pdf_file?: File;
+  }): Promise<ApiResponse<Book>> {
+    const formData = new FormData();
+    
+    // Ajouter les données du livre
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value.toString());
+      }
+    });
+    
+    // Ajouter les fichiers si présents
+    if (files?.cover_image) {
+      formData.append('cover_image', files.cover_image);
+    }
+    if (files?.pdf_file) {
+      formData.append('pdf_file', files.pdf_file);
+    }
+    
+    const token = localStorage.getItem('token');
+    return fetch(`${API_URL}/books`, {
+      method: 'POST',
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: formData
+    }).then(res => res.json());
+  },
+
+  async updateBookWithFiles(id: number, data: {
+    title?: string;
+    author?: string;
+    isbn?: string;
+    publisher?: string;
+    publication_year?: number;
+    category?: string;
+    description?: string;
+    total_copies?: number;
+    language?: string;
+    pages?: number;
+    location?: string;
+  }, files?: {
+    cover_image?: File;
+    pdf_file?: File;
+  }): Promise<ApiResponse<Book>> {
+    const formData = new FormData();
+    
+    // Ajouter les données du livre
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value.toString());
+      }
+    });
+    
+    // Ajouter les fichiers si présents
+    if (files?.cover_image) {
+      formData.append('cover_image', files.cover_image);
+    }
+    if (files?.pdf_file) {
+      formData.append('pdf_file', files.pdf_file);
+    }
+    
+    const token = localStorage.getItem('token');
+    return fetch(`${API_URL}/books/${id}`, {
+      method: 'PUT',
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: formData
+    }).then(res => res.json());
   }
 };
 
@@ -282,6 +498,80 @@ export const reviewService = {
     return authenticatedFetch(`/reviews/${reviewId}`, {
       method: 'DELETE'
     });
+  }
+};
+
+// Services pour les statistiques admin
+export const adminService = {
+  async getDashboard(): Promise<ApiResponse<{
+    totalUsers: number;
+    totalBooks: number;
+    activeLoans: number;
+    overdueLoans: number;
+    pendingReturns: number;
+    newUsersThisWeek: number;
+    availableBooks: number;
+    totalReviews: number;
+    averageRating: number;
+    unreadNotifications: number;
+  }>> {
+    return authenticatedFetch('/admin/dashboard');
+  },
+
+  async getSystemStats(): Promise<ApiResponse<{
+    active_users: number;
+    admin_users: number;
+    available_books: number;
+    total_books: number;
+    active_loans: number;
+    overdue_loans: number;
+    total_loans: number;
+    total_reviews: number;
+    average_rating: number;
+    unread_notifications: number;
+  }>> {
+    return authenticatedFetch('/admin/stats/system');
+  },
+
+  async getStatsByPeriod(period: 'week' | 'month' | 'year' = 'month'): Promise<ApiResponse<any>> {
+    return authenticatedFetch(`/admin/stats/period?period=${period}`);
+  },
+
+  async getRecentActivities(limit: number = 10): Promise<ApiResponse<any[]>> {
+    return authenticatedFetch(`/admin/activities/recent?limit=${limit}`);
+  },
+
+  async getMonthlyReport(): Promise<ApiResponse<any>> {
+    return authenticatedFetch('/admin/reports/monthly');
+  },
+
+  async getAllUsers(filters?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<ApiResponse<{
+    users: UserProfile[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }>> {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+    }
+    const query = params.toString();
+    return authenticatedFetch(`/admin/users${query ? `?${query}` : ''}`);
   }
 };
 
