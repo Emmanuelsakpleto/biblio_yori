@@ -14,7 +14,8 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        yori: "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg hover:from-amber-700 hover:to-orange-700"
+        yori: "bg-gradient-to-r from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] text-white shadow-lg hover:from-[var(--color-hover-primary)] hover:to-[var(--color-hover-secondary)]",
+        yori2: "bg-gradient-to-r from-[var(--color-accent-secondary)] to-[var(--color-accent-tertiary)] text-white shadow-lg hover:from-[var(--color-hover-secondary)] hover:to-[var(--color-hover-tertiary)]"
       },
       size: {
         default: "h-10 px-4 py-2",

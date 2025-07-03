@@ -23,211 +23,105 @@
   --glass-bg: rgba(255, 255, 255, 0.65);
   --glass-border: rgba(222, 226, 230, 0.45);
   --glass-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.1);
-  
-  /* Autres variables */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
 }
 
-/* Animation pour le pulse */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.7;
-    transform: scale(1);
+/* Configuration de base pour un rendu optimal */
+@layer base {
+  * {
+    box-sizing: border-box;
   }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.05);
-  }
-}
 
-/* Animation pour le spinner */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
-  to {
-    transform: rotate(360deg);
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--color-bg-main);
+    color: var(--color-text-primary);
   }
 }
 
-/* Animation pour le shimmer effect */
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-/* Base styles pour un rendu impeccable */
-* {
-  box-sizing: border-box;
-}
-
-html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--color-bg-main);
-  color: var(--color-text-primary);
-  line-height: 1.6;
-}
-
-/* Glass Card Effect - Ultra moderne */
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px;
-  box-shadow: var(--shadow-xl);
-  position: relative;
-  overflow: hidden;
-}
-
-.glass-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-}
-
-/* Bouton Principal - Design premium */
-.btn-primary {
-  background: var(--gradient-primary);
-  border: none;
-  border-radius: 16px;
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.3);
-}
-
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.btn-primary:hover {
-  background: var(--gradient-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4);
-}
-
-.btn-primary:hover::before {
-  left: 100%;
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-  transition: transform 0.1s;
-}
-
-/* Inputs modernes avec focus states */
-input[type="text"],
-input[type="email"],
-input[type="password"] {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Animations fluides */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 0.9;
-  }
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Responsive design premium */
-@media (max-width: 1024px) {
-  .glass-card {
-    margin: 20px;
-    border-radius: 20px;
-  }
-}
-
-@media (max-width: 640px) {
-  .glass-card {
-    margin: 16px;
-    padding: 24px !important;
-    border-radius: 16px;
+/* Composants Tailwind personnalisés pour YORI */
+@layer components {
+  /* Glass effect avec Tailwind */
+  .glass-effect {
+    @apply bg-white/90 backdrop-blur-sm border border-white/20;
   }
   
-  .btn-primary {
-    border-radius: 12px;
+  .glass-effect-strong {
+    @apply bg-white/95 backdrop-blur-md border border-slate-200/50;
+  }
+
+  /* Boutons premium */
+  .btn-premium {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-6 py-3 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5;
+  }
+
+  /* Cards modernes */
+  .card-modern {
+    @apply bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/50 transition-all duration-300 hover:shadow-2xl;
+  }
+
+  /* Animations fluides */
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
   }
 }
 
-/* Scrollbar moderne */
-::-webkit-scrollbar {
-  width: 8px;
-}
+/* Animations personnalisées */
+@layer utilities {
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.1);
-}
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.3);
-  border-radius: 4px;
-}
+  /* Texture d'arrière-plan subtile */
+  .bg-pattern {
+    background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.15) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.5);
-}
+  /* Scrollbar moderne */
+  .scrollbar-modern {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(148 163 184) transparent;
+  }
 
-/* Effets de survol professionnels */
-.hover-glow {
-  transition: all 0.3s ease;
-}
+  .scrollbar-modern::-webkit-scrollbar {
+    width: 8px;
+  }
 
-.hover-glow:hover {
-  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+  .scrollbar-modern::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .scrollbar-modern::-webkit-scrollbar-thumb {
+    @apply bg-slate-400 rounded-full;
+  }
+
+  .scrollbar-modern::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-500;
+  }
 }

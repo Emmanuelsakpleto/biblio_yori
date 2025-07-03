@@ -13,22 +13,19 @@ import {
   Users,
   Grid,
   List,
-  Filter,
-  SortAsc,
-  SortDesc,
-  Home,
   Calendar,
-  User as UserIcon,
+  TrendingUp,
+  Award,
+  ArrowLeft,
+  Home,
   Tag,
-  Plus,
-  CheckCircle,
-  Clock,
-  AlertTriangle
+  User as UserIcon,
+  Plus
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Badge } from '../../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -54,7 +51,7 @@ export default function BooksPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [borrowingBooks, setBorrowingBooks] = useState<Set<number>>(new Set());
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
@@ -119,7 +116,7 @@ export default function BooksPage() {
       );
     }
 
-    if (selectedCategory) {
+    if (selectedCategory && selectedCategory !== 'all') {
       filtered = filtered.filter(book => book.category === selectedCategory);
     }
 
@@ -224,7 +221,10 @@ export default function BooksPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto">
+      {/* Légère texture d'arrière-plan */}
+      <div className="fixed inset-0 bg-pattern opacity-[0.015] pointer-events-none z-0"></div>
+      
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 mb-6">
           <Link 
@@ -241,24 +241,32 @@ export default function BooksPage() {
         </div>
 
         {/* En-tête */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-slate-200">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-8 mb-10 border border-slate-200/50 relative overflow-hidden">
+          {/* Effet de brillance subtil */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50"></div>
+          
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 bg-clip-text text-transparent mb-3">
                 Catalogue de la Bibliothèque
               </h1>
-              <p className="text-slate-600 text-lg">
-                Découvrez notre collection de {books.length} livres
+              <p className="text-slate-600 text-xl font-medium">
+                Découvrez notre collection de <span className="text-blue-600 font-semibold">{books.length}</span> livres
               </p>
             </div>
             
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-slate-100 rounded-xl p-1">
+              <div className="flex items-center gap-2 bg-slate-100/80 backdrop-blur-sm rounded-2xl p-1.5 shadow-lg border border-slate-200/50">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
-                  className="rounded-lg"
+                  className={cn(
+                    "rounded-xl transition-all duration-200",
+                    viewMode === 'grid' 
+                      ? "bg-white shadow-md text-slate-900" 
+                      : "hover:bg-white/60"
+                  )}
                 >
                   <Grid className="w-4 h-4" />
                 </Button>
@@ -266,7 +274,12 @@ export default function BooksPage() {
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('list')}
-                  className="rounded-lg"
+                  className={cn(
+                    "rounded-xl transition-all duration-200",
+                    viewMode === 'list' 
+                      ? "bg-white shadow-md text-slate-900" 
+                      : "hover:bg-white/60"
+                  )}
                 >
                   <List className="w-4 h-4" />
                 </Button>
@@ -275,25 +288,25 @@ export default function BooksPage() {
           </div>
 
           {/* Barre de recherche et filtres */}
-          <div className="flex flex-col lg:flex-row gap-4 mt-6">
+          <div className="flex flex-col lg:flex-row gap-6 mt-8 relative">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <Input
                 placeholder="Rechercher par titre, auteur ou catégorie..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-12 bg-slate-50 border-slate-200 focus:bg-white transition-colors duration-200"
+                className="pl-12 h-14 bg-slate-50/90 backdrop-blur-sm border-slate-200/60 focus:bg-white/95 transition-all duration-300 shadow-md focus:shadow-lg rounded-2xl text-base font-medium"
               />
             </div>
             
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-full lg:w-64 h-12 bg-slate-50 border-slate-200">
+              <SelectTrigger className="w-full lg:w-72 h-14 bg-slate-50/90 backdrop-blur-sm border-slate-200/60 shadow-md rounded-2xl font-medium">
                 <SelectValue placeholder="Toutes les catégories" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Toutes les catégories</SelectItem>
+              <SelectContent className="rounded-2xl border-slate-200/60 shadow-xl">
+                <SelectItem value="all" className="rounded-xl">Toutes les catégories</SelectItem>
                 {categories.map((category) => (
-                  <SelectItem key={category.name} value={category.name}>
+                  <SelectItem key={category.name} value={category.name} className="rounded-xl">
                     {category.name} ({category.count})
                   </SelectItem>
                 ))}
@@ -302,61 +315,45 @@ export default function BooksPage() {
           </div>
         </div>
 
-        {/* Catégories populaires */}
-        {categories.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-slate-900 mb-4">Catégories populaires</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {categories.slice(0, 6).map((category, index) => {
-                const IconComponent = category.icon;
-                return (
-                  <motion.div
-                    key={category.name}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Card 
-                      className={cn(
-                        "cursor-pointer transition-all duration-200 hover:shadow-lg",
-                        selectedCategory === category.name ? "ring-2 ring-blue-500" : ""
-                      )}
-                      onClick={() => setSelectedCategory(selectedCategory === category.name ? '' : category.name)}
-                    >
-                      <CardContent className="p-4 text-center">
-                        <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-r ${category.color} mb-3`}>
-                          <IconComponent className="w-6 h-6 text-white" />
-                        </div>
-                        <h3 className="font-medium text-slate-900 text-sm">{category.name}</h3>
-                        <p className="text-xs text-slate-600">{category.count} livres</p>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Résultats */}
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-slate-600">
-            {filteredBooks.length} livre{filteredBooks.length !== 1 ? 's' : ''} trouvé{filteredBooks.length !== 1 ? 's' : ''}
-            {searchTerm && ` pour "${searchTerm}"`}
-            {selectedCategory && ` dans "${selectedCategory}"`}
-          </p>
+        <div className="mb-8 flex items-center justify-between bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 shadow-lg">
+          <div>
+            <p className="text-slate-800 text-lg font-semibold">
+              {filteredBooks.length} livre{filteredBooks.length !== 1 ? 's' : ''} trouvé{filteredBooks.length !== 1 ? 's' : ''}
+            </p>
+            <p className="text-slate-600 text-sm mt-1">
+              {searchTerm && `Recherche : "${searchTerm}"`}
+              {searchTerm && selectedCategory && selectedCategory !== 'all' && ' • '}
+              {selectedCategory && selectedCategory !== 'all' && `Catégorie : "${selectedCategory}"`}
+            </p>
+          </div>
+          
+          {filteredBooks.length > 0 && (
+            <div className="flex items-center gap-2 text-slate-600">
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-medium">Résultats de qualité</span>
+            </div>
+          )}
         </div>
 
         {/* Liste des livres */}
         {filteredBooks.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-            <BookOpen className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">Aucun livre trouvé</h3>
-            <p className="text-slate-600">
-              {searchTerm || selectedCategory 
-                ? "Essayez de modifier vos critères de recherche"
-                : "Aucun livre n'est disponible pour le moment"
-              }
-            </p>
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-16 text-center border border-slate-200/50 relative overflow-hidden">
+            {/* Effet de brillance */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30"></div>
+            
+            <div className="relative">
+              <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-slate-100 to-blue-100 rounded-full mb-6 shadow-lg">
+                <BookOpen className="w-12 h-12 text-slate-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Aucun livre trouvé</h3>
+              <p className="text-slate-600 text-lg leading-relaxed max-w-md mx-auto">
+                {searchTerm || (selectedCategory && selectedCategory !== 'all')
+                  ? "Essayez de modifier vos critères de recherche pour découvrir notre vaste collection"
+                  : "Aucun livre n'est disponible pour le moment"
+                }
+              </p>
+            </div>
           </div>
         ) : (
           <div className={cn(
@@ -373,7 +370,10 @@ export default function BooksPage() {
                 transition={{ delay: index * 0.05 }}
               >
                 {viewMode === 'grid' ? (
-                  <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden">
+                  <Card className="group hover:shadow-2xl transition-all duration-500 border-0 shadow-xl overflow-hidden backdrop-blur-md bg-white/95 hover:bg-white relative">
+                    {/* Effet de survol subtil */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
                     <div className="relative">
                       {book.cover_image ? (
                         <div className="aspect-[3/4] relative overflow-hidden">
@@ -381,12 +381,13 @@ export default function BooksPage() {
                             src={book.cover_image}
                             alt={book.title}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                           />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                         </div>
                       ) : (
-                        <div className="aspect-[3/4] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                          <BookOpen className="w-16 h-16 text-slate-400" />
+                        <div className="aspect-[3/4] bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 flex items-center justify-center group-hover:from-slate-200 group-hover:to-blue-100 transition-all duration-500">
+                          <BookOpen className="w-20 h-20 text-slate-400 group-hover:text-slate-500 transition-colors duration-300" />
                         </div>
                       )}
                       
@@ -394,10 +395,10 @@ export default function BooksPage() {
                         <Badge 
                           variant={book.available_copies > 0 ? "default" : "secondary"}
                           className={cn(
-                            "shadow-lg",
+                            "shadow-lg backdrop-blur-sm font-semibold",
                             book.available_copies > 0 
-                              ? "bg-green-500 hover:bg-green-600" 
-                              : "bg-red-500"
+                              ? "bg-emerald-500/90 hover:bg-emerald-600/90 text-white border-emerald-400/50" 
+                              : "bg-red-500/90 text-white border-red-400/50"
                           )}
                         >
                           {book.available_copies > 0 ? `${book.available_copies} dispo` : "Indisponible"}
@@ -405,23 +406,23 @@ export default function BooksPage() {
                       </div>
                     </div>
                     
-                    <CardContent className="p-6">
-                      <div className="space-y-3">
+                    <CardContent className="p-7 relative">
+                      <div className="space-y-4">
                         <div>
-                          <h3 className="font-bold text-slate-900 text-lg line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
+                          <h3 className="font-bold text-slate-900 text-lg line-clamp-2 group-hover:text-blue-700 transition-colors duration-300 leading-snug">
                             {book.title}
                           </h3>
-                          <p className="text-slate-600 text-sm">{book.author}</p>
+                          <p className="text-slate-600 text-sm font-medium mt-1">{book.author}</p>
                         </div>
                         
                         {book.category && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs font-medium bg-slate-50/80 border-slate-300/60">
                             {book.category}
                           </Badge>
                         )}
                         
                         <div className="flex items-center justify-between pt-4">
-                          <Button variant="outline" size="sm" asChild>
+                          <Button variant="outline" size="sm" asChild className="hover:bg-slate-50 border-slate-300/60 font-medium rounded-xl">
                             <Link href={`/book/${book.id}`}>
                               <Eye className="w-4 h-4 mr-2" />
                               Détails
@@ -433,7 +434,7 @@ export default function BooksPage() {
                               size="sm"
                               onClick={() => handleBorrow(book)}
                               disabled={borrowingBooks.has(book.id)}
-                              className="bg-blue-600 hover:bg-blue-700"
+                              className="bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl font-medium rounded-xl transition-all duration-300"
                             >
                               {borrowingBooks.has(book.id) ? (
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -448,55 +449,60 @@ export default function BooksPage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <Card className="hover:shadow-lg transition-all duration-200">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-6">
+                  <Card className="hover:shadow-xl transition-all duration-300 backdrop-blur-md bg-white/95 border border-slate-200/50 shadow-lg hover:border-slate-300/50 group">
+                    <CardContent className="p-8">
+                      <div className="flex items-center gap-8">
                         <div className="flex-shrink-0">
                           {book.cover_image ? (
-                            <div className="w-20 h-28 relative overflow-hidden rounded-lg">
+                            <div className="w-24 h-32 relative overflow-hidden rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300">
                               <Image
                                 src={book.cover_image}
                                 alt={book.title}
                                 fill
-                                className="object-cover"
+                                className="object-cover group-hover:scale-105 transition-transform duration-500"
                               />
                             </div>
                           ) : (
-                            <div className="w-20 h-28 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg flex items-center justify-center">
-                              <BookOpen className="w-8 h-8 text-slate-400" />
+                            <div className="w-24 h-32 bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 rounded-xl flex items-center justify-center shadow-lg group-hover:from-slate-200 group-hover:to-blue-100 transition-all duration-300">
+                              <BookOpen className="w-10 h-10 text-slate-400 group-hover:text-slate-500 transition-colors duration-300" />
                             </div>
                           )}
                         </div>
                         
-                        <div className="flex-1 space-y-2">
+                        <div className="flex-1 space-y-3">
                           <div>
-                            <h3 className="font-bold text-slate-900 text-xl hover:text-blue-600 transition-colors duration-200">
+                            <h3 className="font-bold text-slate-900 text-2xl hover:text-blue-700 transition-colors duration-300 leading-tight">
                               {book.title}
                             </h3>
-                            <p className="text-slate-600">{book.author}</p>
+                            <p className="text-slate-600 text-lg font-medium mt-1">{book.author}</p>
                           </div>
                           
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-4">
                             {book.category && (
-                              <Badge variant="outline">
+                              <Badge variant="outline" className="font-medium bg-slate-50/80 border-slate-300/60">
                                 {book.category}
                               </Badge>
                             )}
                             <Badge 
                               variant={book.available_copies > 0 ? "default" : "secondary"}
-                              className={book.available_copies > 0 ? "bg-green-500" : "bg-red-500"}
+                              className={cn(
+                                "font-semibold",
+                                book.available_copies > 0 
+                                  ? "bg-emerald-500/90 text-white border-emerald-400/50" 
+                                  : "bg-red-500/90 text-white border-red-400/50"
+                              )}
                             >
                               {book.available_copies > 0 ? `${book.available_copies} disponible(s)` : "Indisponible"}
                             </Badge>
                           </div>
                           
-                          <p className="text-slate-600 text-sm line-clamp-2">
+                          <p className="text-slate-600 text-base line-clamp-2 leading-relaxed">
                             {book.description || "Aucune description disponible."}
                           </p>
                         </div>
                         
-                        <div className="flex-shrink-0 flex items-center gap-3">
-                          <Button variant="outline" asChild>
+                        <div className="flex-shrink-0 flex items-center gap-4">
+                          <Button variant="outline" asChild className="hover:bg-slate-50 border-slate-300/60 font-medium rounded-xl">
                             <Link href={`/book/${book.id}`}>
                               <Eye className="w-4 h-4 mr-2" />
                               Détails
@@ -507,7 +513,7 @@ export default function BooksPage() {
                             <Button 
                               onClick={() => handleBorrow(book)}
                               disabled={borrowingBooks.has(book.id)}
-                              className="bg-blue-600 hover:bg-blue-700"
+                              className="bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl font-medium rounded-xl transition-all duration-300"
                             >
                               {borrowingBooks.has(book.id) ? (
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

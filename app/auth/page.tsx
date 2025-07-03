@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
-import { Eye, EyeOff, Mail, Lock, User, BookOpen, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, BookOpen, Sparkles, GraduationCap, Library, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -94,262 +95,374 @@ export default function AuthPage() {
     resetForm();
   };
 
+  // Identifiants prédéfinis pour connexion rapide
+  const adminLogin = () => {
+    setFormData({
+      ...formData,
+      email: 'admin@yori.com',
+      password: 'Password123!'
+    });
+  };
+
+  const biblioLogin = () => {
+    setFormData({
+      ...formData,
+      email: 'sophie.biblio@yori.com',
+      password: 'Password123!'
+    });
+  };
+
+  // Différents comptes étudiants disponibles
+  const studentAccounts = [
+    { name: 'Jean Dupont', email: 'jean.dupont@student.univ.com' },
+    { name: 'Marie Martin', email: 'marie.martin@student.univ.com' },
+    { name: 'Pierre Durand', email: 'pierre.durand@student.univ.com' },
+    { name: 'Test', email: 'test@example.com' }
+  ];
+
+  const [selectedStudentIndex, setSelectedStudentIndex] = useState(0);
+
+  const studentLogin = () => {
+    const selectedStudent = studentAccounts[selectedStudentIndex];
+    setFormData({
+      ...formData,
+      email: selectedStudent.email,
+      password: 'Password123!'
+    });
+  };
+  
+  const handleStudentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStudentIndex(Number(e.target.value));
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--color-bg-main)] via-[var(--color-bg-alt)] to-[var(--color-bg-main)]">
-      {/* Effets de fond subtils et élégants */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[var(--color-accent-secondary)]/8 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[var(--color-accent-primary)]/8 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" style={{animationDelay: '2s'}}></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-[var(--color-accent-tertiary)]/8 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" style={{animationDelay: '4s'}}></div>
+    <div className="min-h-screen bg-gradient-to-br from-[var(--color-bg-main)] via-[var(--color-bg-alt)] to-[var(--color-bg-main)] relative overflow-hidden">
+      {/* Effets de fond ultra-modernes */}
+      <div className="absolute inset-0">
+        {/* Dégradés organiques animés */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-[var(--color-accent-primary)]/20 via-[var(--color-accent-secondary)]/15 to-transparent rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-br from-[var(--color-accent-secondary)]/20 via-[var(--color-accent-tertiary)]/15 to-transparent rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-br from-[var(--color-accent-primary)]/15 via-[var(--color-accent-secondary)]/10 to-transparent rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-pulse" style={{animationDelay: '4s'}}></div>
         
-        {/* Motifs subtils pour ajouter de la profondeur */}
-        <div className="absolute top-1/4 right-1/4 w-48 h-48 border border-[var(--color-accent-primary)]/10 rounded-full"></div>
-        <div className="absolute bottom-1/3 left-1/5 w-64 h-64 border border-[var(--color-accent-secondary)]/10 rounded-full"></div>
-        
-        {/* Grain texture overlay */}
-        <div className="absolute inset-0 bg-[url('/images/noise.png')] opacity-[0.03] mix-blend-overlay pointer-events-none"></div>
+        {/* Grille subtile */}
+        <div className="absolute inset-0 bg-pattern opacity-[0.02]"></div>
       </div>
 
-      <div className="relative min-h-screen flex items-center justify-center lg:grid lg:grid-cols-2">
-        {/* Côté gauche - Branding & Texte */}
-        <div className="hidden lg:flex flex-col justify-center px-12 xl:px-16 space-y-8">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/30 backdrop-blur-md border border-white/30 rounded-full text-[var(--color-accent-primary)] text-sm font-medium w-fit shadow-sm">
-            <Sparkles className="w-4 h-4" />
-            Bibliothèque Universitaire Numérique
-          </div>
-          
-          {/* Contenu principal */}
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h1 className="text-5xl xl:text-6xl font-bold text-[var(--color-text-primary)] leading-tight">
-                Bienvenue sur
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)]">
+      <div className="relative min-h-screen flex">
+        {/* Côté gauche - Branding ultra-moderne */}
+        <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-16 xl:px-24 relative">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="space-y-12"
+          >
+            {/* Badge élégant */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="inline-flex items-center gap-3 px-6 py-3 glass-effect rounded-2xl text-[var(--color-text-primary)] text-sm font-semibold w-fit shadow-lg"
+            >
+              <div className="w-2 h-2 bg-gradient-to-r from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] rounded-full animate-pulse"></div>
+              Plateforme Universitaire Premium
+            </motion.div>
+            
+            {/* Titre principal */}
+            <div className="space-y-6">
+              <motion.h1 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.8 }}
+                className="text-6xl xl:text-7xl font-bold leading-tight"
+              >
+                <span className="text-[var(--color-text-primary)]">Bienvenue sur</span>
+                <br />
+                <span className="bg-gradient-to-r from-[var(--color-accent-primary)] via-[var(--color-accent-secondary)] to-[var(--color-accent-tertiary)] bg-clip-text text-transparent">
                   YORI
                 </span>
-              </h1>
+              </motion.h1>
               
-              <p className="text-xl text-[var(--color-text-secondary)] leading-relaxed max-w-xl">
-                Votre plateforme moderne de gestion de bibliothèque universitaire. Accédez à des milliers de ressources académiques et gérez vos emprunts en toute simplicité.
-              </p>
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+                className="text-xl text-[var(--color-text-secondary)] leading-relaxed max-w-2xl font-medium"
+              >
+                Votre bibliothèque universitaire digitale nouvelle génération. 
+                Accédez à un écosystème complet de ressources académiques avec une expérience utilisateur exceptionnelle.
+              </motion.p>
             </div>
             
-            {/* Caractéristiques */}
-            <div className="space-y-4 pt-8">
-              <div className="flex items-center gap-3 text-[var(--color-text-secondary)]">
-                <div className="w-2 h-2 bg-[var(--color-accent-primary)] rounded-full"></div>
-                <span>Catalogue académique complet et recherche avancée</span>
+            {/* Caractéristiques avec icônes */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.6 }}
+              className="space-y-6 pt-8"
+            >
+              <div className="flex items-center gap-4 text-[var(--color-text-secondary)]">
+                <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] rounded-2xl flex items-center justify-center shadow-lg">
+                  <Library className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-lg font-medium">Catalogue académique de référence</span>
               </div>
-              <div className="flex items-center gap-3 text-[var(--color-text-secondary)]">
-                <div className="w-2 h-2 bg-[var(--color-accent-secondary)] rounded-full"></div>
-                <span>Gestion intelligente des emprunts et réservations</span>
+              <div className="flex items-center gap-4 text-[var(--color-text-secondary)]">
+                <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-accent-secondary)] to-[var(--color-accent-primary)] rounded-2xl flex items-center justify-center shadow-lg">
+                  <GraduationCap className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-lg font-medium">Gestion intelligente des emprunts</span>
               </div>
-              <div className="flex items-center gap-3 text-[var(--color-text-secondary)]">
-                <div className="w-2 h-2 bg-[var(--color-accent-tertiary)] rounded-full"></div>
-                <span>Suivi personnalisé de vos ressources académiques</span>
+              <div className="flex items-center gap-4 text-[var(--color-text-secondary)]">
+                <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-accent-tertiary)] to-[var(--color-accent-secondary)] rounded-2xl flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-lg font-medium">Expérience personnalisée premium</span>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
 
-        {/* Côté droit - Formulaire */}
-        <div className="w-full max-w-md mx-auto lg:mx-0 lg:max-w-lg xl:max-w-xl p-6 lg:p-12">
-          <div className="glass-card p-8 lg:p-10 relative shadow-2xl before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/20 before:to-transparent before:rounded-3xl before:pointer-events-none before:z-0">
-            {/* Highlight effect */}
-            <div className="absolute -inset-px bg-gradient-to-t from-transparent via-white/5 to-white/20 rounded-3xl pointer-events-none"></div>
-            
-            {/* Logo Mobile */}
-            <div className="lg:hidden flex items-center justify-center mb-8 relative z-10">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-lg">
-                <BookOpen className="w-8 h-8 text-[var(--color-accent-primary)]" />
-              </div>
-            </div>
-
-            {/* En-tête */}
-            <div className="text-center mb-8 relative z-10">
-              <h2 className="text-3xl font-bold text-[var(--color-text-primary)] mb-2">
-                {isLogin ? 'Connexion' : 'Inscription'}
-              </h2>
-              <p className="text-[var(--color-text-secondary)]">
-                {isLogin 
-                  ? 'Accédez à votre espace personnel' 
-                  : 'Rejoignez la communauté universitaire'
-                }
-              </p>
-            </div>
-
-            {/* Boutons de basculement */}
-            <div className="flex bg-white/40 backdrop-blur-md rounded-2xl p-1 mb-8 border border-white/30 shadow-sm relative z-10">
-              <button
-                type="button"
-                onClick={() => !isLogin && toggleMode()}
-                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
-                  isLogin 
-                    ? 'bg-[var(--color-accent-primary)] text-white shadow-lg shadow-[var(--color-accent-primary)]/25' 
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-                }`}
+        {/* Côté droit - Formulaire ultra-moderne */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 relative">
+          <motion.div 
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="w-full max-w-lg"
+          >
+            {/* Container du formulaire avec glassmorphisme */}
+            <div className="glass-effect-strong rounded-3xl shadow-2xl p-10 relative overflow-hidden">
+              {/* Effet de brillance */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-accent-secondary)]/60 to-transparent"></div>
+              
+              {/* En-tête du formulaire */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+                className="text-center mb-10"
               >
-                Connexion
-              </button>
-              <button
-                type="button"
-                onClick={() => isLogin && toggleMode()}
-                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
-                  !isLogin 
-                    ? 'bg-[var(--color-accent-primary)] text-white shadow-lg shadow-[var(--color-accent-primary)]/25' 
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-                }`}
-              >
-                Inscription
-              </button>
-            </div>
-
-            {/* Formulaire */}
-            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-              {!isLogin && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--color-text-secondary)] w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Prénom"
-                      value={formData.first_name}
-                      onChange={(e) => handleInputChange('first_name', e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 bg-white/50 backdrop-blur-md border border-white/30 rounded-xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] focus:ring-2 focus:ring-[var(--color-accent-primary)] focus:border-transparent transition-all shadow-sm"
-                      required={!isLogin}
-                    />
-                  </div>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--color-text-secondary)] w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Nom"
-                      value={formData.last_name}
-                      onChange={(e) => handleInputChange('last_name', e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 bg-white/50 backdrop-blur-md border border-white/30 rounded-xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] focus:ring-2 focus:ring-[var(--color-accent-primary)] focus:border-transparent transition-all shadow-sm"
-                      required={!isLogin}
-                    />
-                  </div>
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] rounded-2xl mb-6 shadow-xl">
+                  <BookOpen className="w-10 h-10 text-white" />
                 </div>
-              )}
+                
+                <h2 className="text-3xl font-bold text-[var(--color-text-primary)] mb-3">
+                  {isLogin ? 'Connexion' : 'Créer un compte'}
+                </h2>
+                <p className="text-[var(--color-text-secondary)] font-medium">
+                  {isLogin 
+                    ? 'Accédez à votre espace bibliothèque' 
+                    : 'Rejoignez la communauté académique YORI'
+                  }
+                </p>
+              </motion.div>
 
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--color-text-secondary)] w-5 h-5" />
-                <input
-                  type="email"
-                  placeholder="Adresse e-mail"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-white/50 backdrop-blur-md border border-white/30 rounded-xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] focus:ring-2 focus:ring-[var(--color-accent-primary)] focus:border-transparent transition-all shadow-sm"
-                  required
-                />
-              </div>
+              {/* Messages d'erreur */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-medium"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--color-text-secondary)] w-5 h-5" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Mot de passe"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="w-full pl-12 pr-12 py-4 bg-white/50 backdrop-blur-md border border-white/30 rounded-xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] focus:ring-2 focus:ring-[var(--color-accent-primary)] focus:border-transparent transition-all shadow-sm"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
+              {/* Formulaire */}
+              <motion.form 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                onSubmit={handleSubmit} 
+                className="space-y-6"
+              >
+                {/* Champs nom/prénom pour inscription */}
+                <AnimatePresence>
+                  {!isLogin && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="grid grid-cols-2 gap-4"
+                    >
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                        <input
+                          type="text"
+                          placeholder="Prénom"
+                          value={formData.first_name}
+                          onChange={(e) => handleInputChange('first_name', e.target.value)}
+                          className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
+                          required={!isLogin}
+                        />
+                      </div>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                        <input
+                          type="text"
+                          placeholder="Nom"
+                          value={formData.last_name}
+                          onChange={(e) => handleInputChange('last_name', e.target.value)}
+                          className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
+                          required={!isLogin}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              {!isLogin && (
+                {/* Email */}
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--color-text-secondary)] w-5 h-5" />
+                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Confirmer le mot de passe"
-                    value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-white/50 backdrop-blur-md border border-white/30 rounded-xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] focus:ring-2 focus:ring-[var(--color-accent-primary)] focus:border-transparent transition-all shadow-sm"
-                    required={!isLogin}
+                    type="email"
+                    placeholder="Adresse e-mail universitaire"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
+                    required
                   />
                 </div>
-              )}
 
-              {error && (
-                <div className="p-4 bg-[var(--color-error)]/10 backdrop-blur-md border border-[var(--color-error)]/20 rounded-xl text-[var(--color-error)] text-sm">
-                  {error}
+                {/* Mot de passe */}
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mot de passe sécurisé"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className="w-full pl-12 pr-12 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors duration-200 p-1"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
-              )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full py-4 px-6 text-lg font-semibold rounded-xl bg-gradient-to-r from-[var(--color-accent-primary)] to-[var(--color-accent-primary)] hover:from-[var(--color-hover-primary)] hover:to-[var(--color-accent-primary)] text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[var(--color-accent-primary)]/20 ${
-                  loading ? 'cursor-wait' : ''
-                }`}
-              >
-                {loading ? (
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    {isLogin ? 'Se connecter' : 'Créer le compte'}
-                  </>
+                {/* Confirmation mot de passe pour inscription */}
+                <AnimatePresence>
+                  {!isLogin && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="relative"
+                    >
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Confirmer le mot de passe"
+                        value={formData.confirmPassword}
+                        onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                        className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] backdrop-blur-sm border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium"
+                        required={!isLogin}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Bouton de soumission */}
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] hover:from-[var(--color-hover-primary)] hover:to-[var(--color-hover-secondary)] disabled:from-slate-400 disabled:to-slate-500 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 disabled:transform-none disabled:shadow-lg flex items-center justify-center gap-3 group"
+                  whileHover={{ scale: loading ? 1 : 1.02 }}
+                  whileTap={{ scale: loading ? 1 : 0.98 }}
+                >
+                  {loading ? (
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span className="text-lg">
+                        {isLogin ? 'Se connecter' : 'Créer mon compte'}
+                      </span>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                    </>
+                  )}
+                </motion.button>
+
+                {/* Boutons d'accès rapide */}
+                {isLogin && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8, duration: 0.6 }}
+                    className="flex flex-col items-center gap-2 mt-6"
+                  >
+                    <p className="text-xs text-[var(--color-text-secondary)] mb-2">
+                      Connexion rapide (mot de passe: Password123!)
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={adminLogin}
+                        className="text-xs px-3 py-1.5 bg-[var(--color-accent-primary)]/10 text-[var(--color-accent-primary)] rounded-lg hover:bg-[var(--color-accent-primary)]/20 transition-colors"
+                      >
+                        Administrateur
+                      </button>
+                      <button
+                        type="button"
+                        onClick={biblioLogin}
+                        className="text-xs px-3 py-1.5 bg-[var(--color-accent-tertiary)]/10 text-[var(--color-accent-tertiary)] rounded-lg hover:bg-[var(--color-accent-tertiary)]/20 transition-colors"
+                      >
+                        Bibliothécaire
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <select 
+                          value={selectedStudentIndex}
+                          onChange={handleStudentChange}
+                          className="text-xs bg-[var(--color-accent-secondary)]/5 text-[var(--color-text-secondary)] rounded-lg border border-[var(--color-accent-secondary)]/10 focus:ring-[var(--color-accent-secondary)] focus:border-[var(--color-accent-secondary)]"
+                        >
+                          {studentAccounts.map((student, index) => (
+                            <option key={student.email} value={index}>
+                              {student.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={studentLogin}
+                          className="text-xs px-3 py-1.5 bg-[var(--color-accent-secondary)]/10 text-[var(--color-accent-secondary)] rounded-lg hover:bg-[var(--color-accent-secondary)]/20 transition-colors"
+                        >
+                          Étudiant
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
                 )}
-              </button>
-            </form>
 
-            {/* Quick Login (pour les tests) */}
-            {isLogin && (
-              <div className="mt-8 p-4 bg-white/30 backdrop-blur-md rounded-xl border border-white/30 shadow-sm relative z-10">
-                <p className="text-[var(--color-text-secondary)] text-sm mb-3 font-medium">Comptes de test :</p>
-                <div className="space-y-2">
+                {/* Lien de basculement */}
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7, duration: 0.6 }}
+                  className="text-center pt-6"
+                >
                   <button
                     type="button"
-                    onClick={() => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        email: 'admin@yori.com', 
-                        password: 'Password123!' 
-                      }));
-                    }}
-                    className="w-full px-3 py-2 bg-white/40 backdrop-blur-sm text-[var(--color-text-primary)] text-sm rounded-lg hover:bg-[var(--color-accent-primary)]/5 transition-colors border border-white/30"
+                    onClick={toggleMode}
+                    className="text-[var(--color-text-secondary)] hover:text-[var(--color-accent-primary)] font-medium transition-colors duration-200 underline decoration-transparent hover:decoration-current underline-offset-4"
                   >
-                    👑 Admin - admin@yori.com
+                    {isLogin 
+                      ? "Pas encore de compte ? S'inscrire" 
+                      : "Déjà inscrit ? Se connecter"
+                    }
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        email: 'sophie.biblio@yori.com', 
-                        password: 'Password123!' 
-                      }));
-                    }}
-                    className="w-full px-3 py-2 bg-white/40 backdrop-blur-sm text-[var(--color-text-primary)] text-sm rounded-lg hover:bg-[var(--color-accent-primary)]/5 transition-colors border border-white/30"
-                  >
-                    📚 Bibliothécaire - sophie.biblio@yori.com
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        email: 'jean.dupont@student.univ.com', 
-                        password: 'Password123!' 
-                      }));
-                    }}
-                    className="w-full px-3 py-2 bg-white/40 backdrop-blur-sm text-[var(--color-text-primary)] text-sm rounded-lg hover:bg-[var(--color-accent-primary)]/5 transition-colors border border-white/30"
-                  >
-                    🎓 Étudiant - jean.dupont@student.univ.com
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+                </motion.div>
+              </motion.form>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

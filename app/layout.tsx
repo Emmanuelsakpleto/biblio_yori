@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   description: "Plateforme moderne de gestion bibliothécaire pour l'enseignement supérieur",
   keywords: ["bibliothèque", "livres", "emprunts", "université", "étudiants", "yori"],
   authors: [{ name: "YORI Team" }],
-  viewport: "width=device-width, initial-scale=1",
   openGraph: {
     title: "YORI - Bibliothèque Universitaire",
     description: "Plateforme moderne de gestion bibliothécaire pour l'enseignement supérieur",
@@ -30,6 +29,9 @@ export const metadata: Metadata = {
     follow: true,
   },
 };
+
+// Importer le viewport depuis le fichier dédié
+export { viewport } from './viewport';
 
 import { AuthProvider } from '../contexts/AuthContext';
 import { ConfigProvider } from '../contexts/ConfigContext';

@@ -124,34 +124,34 @@ const Home = () => {
       title: "Livres disponibles",
       value: totalBooks.toLocaleString(),
       icon: BookOpen,
-      color: "from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)]",
-      bg: "bg-[var(--color-accent-primary)]/10"
+      color: "from-blue-500 to-cyan-500",
+      bg: "bg-blue-50"
     },
     {
       title: "Catégories",
       value: categories.length.toString(),
       icon: Filter,
-      color: "from-[var(--color-accent-secondary)] to-[var(--color-accent-tertiary)]",
-      bg: "bg-[var(--color-accent-secondary)]/10"
+      color: "from-emerald-500 to-teal-500",
+      bg: "bg-emerald-50"
     },
     {
       title: "Mes emprunts",
       value: "3", // À connecter avec les vraies données
       icon: Clock,
-      color: "from-[var(--color-accent-tertiary)] to-[var(--color-accent-primary)]",
-      bg: "bg-[var(--color-accent-tertiary)]/10"
+      color: "from-orange-500 to-amber-500",
+      bg: "bg-orange-50"
     },
     {
       title: "Favoris",
       value: "12", // À connecter avec les vraies données
       icon: Heart,
-      color: "from-[var(--color-accent-primary)] to-[var(--color-accent-tertiary)]",
-      bg: "bg-[var(--color-accent-primary)]/10"
+      color: "from-rose-500 to-pink-500",
+      bg: "bg-rose-50"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--color-bg-main)] via-[var(--color-bg-alt)] to-[var(--color-bg-main)]">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
       <Header />
       
       {/* Texture de fond */}
@@ -166,13 +166,13 @@ const Home = () => {
             className="text-center mb-8"
           >
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              <span className="text-[var(--color-text-primary)]">Bonjour </span>
-              <span className="bg-gradient-to-r from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] bg-clip-text text-transparent">
+              <span className="text-slate-900">Bonjour </span>
+              <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                 {user?.first_name}
               </span>
-              <span className="text-[var(--color-text-primary)]"> 👋</span>
+              <span className="text-slate-900"> 👋</span>
             </h1>
-            <p className="text-xl text-[var(--color-text-secondary)] max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
               Découvrez votre bibliothèque universitaire numérique. Explorez, empruntez et gérez vos ressources académiques avec une expérience moderne et intuitive.
             </p>
           </motion.div>
@@ -190,7 +190,7 @@ const Home = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
-                className="glass-effect-strong rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300"
+                className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50 hover:shadow-2xl transition-all duration-300"
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
@@ -210,7 +210,7 @@ const Home = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="glass-effect-strong rounded-3xl shadow-2xl p-8 mb-8"
+            className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-white/50 p-8 mb-8"
           >
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Recherche */}
@@ -221,7 +221,7 @@ const Home = () => {
                   placeholder="Rechercher un livre, un auteur, un sujet..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium text-lg"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50/80 border border-slate-200/60 rounded-2xl text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium text-lg"
                 />
               </div>
               
@@ -230,7 +230,7 @@ const Home = () => {
                 <select
                   value={selectedCategory}
                   onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="px-6 py-4 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium min-w-[200px]"
+                  className="px-6 py-4 bg-slate-50/80 border border-slate-200/60 rounded-2xl text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium min-w-[200px]"
                 >
                   <option value="">Toutes les catégories</option>
                   {categories.map(category => (
@@ -241,13 +241,13 @@ const Home = () => {
                 </select>
                 
                 {/* Toggle vue */}
-                <div className="flex items-center gap-2 bg-[var(--glass-bg)] rounded-2xl p-1.5 shadow-sm">
+                <div className="flex items-center gap-2 bg-slate-100/80 rounded-2xl p-1.5 shadow-sm">
                   <button
                     onClick={() => setViewMode('grid')}
                     className={`p-3 rounded-xl transition-all duration-200 ${
                       viewMode === 'grid' 
-                        ? 'bg-white shadow-md text-[var(--color-accent-primary)]' 
-                        : 'hover:bg-white/60 text-[var(--color-text-secondary)]'
+                        ? 'bg-white shadow-md text-slate-900' 
+                        : 'hover:bg-white/60 text-slate-600'
                     }`}
                   >
                     <Grid className="w-5 h-5" />
@@ -256,8 +256,8 @@ const Home = () => {
                     onClick={() => setViewMode('list')}
                     className={`p-3 rounded-xl transition-all duration-200 ${
                       viewMode === 'list' 
-                        ? 'bg-white shadow-md text-[var(--color-accent-primary)]' 
-                        : 'hover:bg-white/60 text-[var(--color-text-secondary)]'
+                        ? 'bg-white shadow-md text-slate-900' 
+                        : 'hover:bg-white/60 text-slate-600'
                     }`}
                   >
                     <List className="w-5 h-5" />
@@ -271,7 +271,7 @@ const Home = () => {
               <motion.div 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
-                className="mt-6 pt-6 border-t border-[var(--color-border)] flex items-center gap-4 text-[var(--color-text-secondary)]"
+                className="mt-6 pt-6 border-t border-slate-200/60 flex items-center gap-4 text-slate-600"
               >
                 <Sparkles className="w-4 h-4" />
                 <span className="font-medium">
@@ -291,26 +291,26 @@ const Home = () => {
               <motion.div 
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-12 h-12 border-4 border-[var(--color-accent-secondary)]/20 border-t-[var(--color-accent-primary)] rounded-full"
+                className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full"
               />
             </div>
           ) : error ? (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-[var(--color-error)]/10 border border-[var(--color-error)]/20 rounded-2xl p-8 text-center"
+              className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center"
             >
-              <p className="text-[var(--color-error)] font-medium">{error}</p>
+              <p className="text-red-700 font-medium">{error}</p>
             </motion.div>
           ) : books.length === 0 ? (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-effect-strong rounded-3xl shadow-xl p-16 text-center"
+              className="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl p-16 text-center border border-white/50"
             >
-              <BookOpen className="w-16 h-16 text-[var(--color-text-secondary)] mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">Aucun livre trouvé</h3>
-              <p className="text-[var(--color-text-secondary)] text-lg">
+              <BookOpen className="w-16 h-16 text-slate-400 mx-auto mb-6" />
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Aucun livre trouvé</h3>
+              <p className="text-slate-600 text-lg">
                 Essayez de modifier vos critères de recherche ou explorez d'autres catégories.
               </p>
             </motion.div>
@@ -343,18 +343,18 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="glass-effect-strong rounded-3xl shadow-xl p-8 mb-12"
+              className="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl p-8 mb-12 border border-white/50"
             >
-              <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6 text-center">
+              <h3 className="text-2xl font-bold text-slate-900 mb-6 text-center">
                 Accès rapide
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Link href="/books" className="group">
-                  <div className="bg-gradient-to-br from-[var(--color-accent-primary)]/5 to-[var(--color-accent-secondary)]/5 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border border-[var(--color-accent-primary)]/10">
-                    <BookOpen className="w-12 h-12 text-[var(--color-accent-primary)] mb-4" />
-                    <h4 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">Catalogue complet</h4>
-                    <p className="text-[var(--color-text-secondary)] mb-4">Explorez toute notre collection</p>
-                    <div className="flex items-center text-[var(--color-accent-primary)] font-medium">
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border border-blue-100">
+                    <BookOpen className="w-12 h-12 text-blue-600 mb-4" />
+                    <h4 className="text-lg font-bold text-slate-900 mb-2">Catalogue complet</h4>
+                    <p className="text-slate-600 mb-4">Explorez toute notre collection</p>
+                    <div className="flex items-center text-blue-600 font-medium">
                       <span>Découvrir</span>
                       <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -362,11 +362,11 @@ const Home = () => {
                 </Link>
                 
                 <Link href="/dashboard/loans" className="group">
-                  <div className="bg-gradient-to-br from-[var(--color-accent-secondary)]/5 to-[var(--color-accent-tertiary)]/5 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border border-[var(--color-accent-secondary)]/10">
-                    <Clock className="w-12 h-12 text-[var(--color-accent-secondary)] mb-4" />
-                    <h4 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">Mes emprunts</h4>
-                    <p className="text-[var(--color-text-secondary)] mb-4">Gérez vos livres empruntés</p>
-                    <div className="flex items-center text-[var(--color-accent-secondary)] font-medium">
+                  <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border border-emerald-100">
+                    <Clock className="w-12 h-12 text-emerald-600 mb-4" />
+                    <h4 className="text-lg font-bold text-slate-900 mb-2">Mes emprunts</h4>
+                    <p className="text-slate-600 mb-4">Gérez vos livres empruntés</p>
+                    <div className="flex items-center text-emerald-600 font-medium">
                       <span>Voir</span>
                       <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -374,11 +374,11 @@ const Home = () => {
                 </Link>
                 
                 <Link href="/dashboard/profile" className="group">
-                  <div className="bg-gradient-to-br from-[var(--color-accent-tertiary)]/5 to-[var(--color-accent-primary)]/5 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border border-[var(--color-accent-tertiary)]/10">
-                    <Users className="w-12 h-12 text-[var(--color-accent-tertiary)] mb-4" />
-                    <h4 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">Mon profil</h4>
-                    <p className="text-[var(--color-text-secondary)] mb-4">Paramètres et préférences</p>
-                    <div className="flex items-center text-[var(--color-accent-tertiary)] font-medium">
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border border-purple-100">
+                    <Users className="w-12 h-12 text-purple-600 mb-4" />
+                    <h4 className="text-lg font-bold text-slate-900 mb-2">Mon profil</h4>
+                    <p className="text-slate-600 mb-4">Paramètres et préférences</p>
+                    <div className="flex items-center text-purple-600 font-medium">
                       <span>Accéder</span>
                       <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </div>
