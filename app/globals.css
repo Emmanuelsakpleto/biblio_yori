@@ -42,6 +42,16 @@
     background-color: var(--color-bg-main);
     color: var(--color-text-primary);
   }
+  
+  /* Fix pour le chevauchement du header et du contenu */
+  main, .main-content {
+    padding-top: 5rem; /* Espace pour le header fixe */
+  }
+
+  /* Fix pour le chevauchement du header et du contenu */
+  main, .main-content {
+    padding-top: 5rem; /* Espace pour le header fixe */
+  }
 }
 
 /* Composants Tailwind personnalisés pour YORI */
@@ -72,6 +82,11 @@
 
   .hover-scale {
     @apply transition-transform duration-300 hover:scale-105;
+  }
+  
+  /* Correction du chevauchement avec le header */
+  main, .main-content {
+    padding-top: 5rem; /* Ajoute de l'espace pour éviter le chevauchement avec le header */
   }
 }
 

@@ -59,9 +59,10 @@ const Header = () => {
 
             {/* Navigation desktop */}
             <nav className="hidden md:flex items-center space-x-1">
+              <NavLink href="/" label="Accueil" />
               <NavLink href="/books" label="Catalogue" />
-              <NavLink href="/dashboard" label="Mon espace" />
-              <NavLink href="/search" label="Recherche" />
+              <NavLink href="/dashboard" label="Mon Espace" />
+              {user?.role === 'admin' && <NavLink href="/dashboard/admin" label="Administration" />}
             </nav>
           </div>
 
@@ -157,9 +158,10 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-slate-200/60 shadow-lg animate-slideDown">
             <nav className="px-4 py-4 space-y-2">
+              <MobileNavLink href="/" label="Accueil" />
               <MobileNavLink href="/books" label="Catalogue" />
-              <MobileNavLink href="/dashboard" label="Mon espace" />
-              <MobileNavLink href="/search" label="Recherche" />
+              <MobileNavLink href="/dashboard" label="Mon Espace" />
+              {user?.role === 'admin' && <MobileNavLink href="/dashboard/admin" label="Administration" />}
               {!user && (
                 <Link
                   href="/auth"

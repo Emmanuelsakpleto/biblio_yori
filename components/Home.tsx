@@ -1,154 +1,64 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
-  Search, 
-  Filter, 
-  TrendingUp, 
-  Clock, 
-  Star, 
-  Users, 
-  Award,
-  Sparkles,
+  Search,
+  GraduationCap,
+  Quote,
   ArrowRight,
-  Grid,
-  List,
-  Eye,
-  Heart,
-  Plus
+  Users
 } from 'lucide-react';
-import BookCard from './BookCard';
 import Header from './Header';
-import { bookService, utils, type Book } from '../lib/api';
-import { useConfig } from '../contexts/ConfigContext';
 import { useAuth } from '../contexts/AuthContext';
 import Link from 'next/link';
-import Image from 'next/image';
+
+const quotes = [
+  {
+    text: "Une bibliothèque n'est pas un luxe, mais l'une des nécessités de la vie.",
+    author: "Henry Ward Beecher"
+  },
+  {
+    text: "Les livres sont les abeilles qui transportent le pollen de la sagesse d'un esprit à l'autre.",
+    author: "James Russell Lowell"
+  },
+  {
+    text: "Celui qui ouvre un livre, ouvre un monde.",
+    author: "Chinois proverbe"
+  },
+  {
+    text: "Les bibliothèques seront toujours importantes. Si vous avez une bibliothèque avec un jardin, vous avez tout ce dont vous avez besoin.",
+    author: "Cicéron"
+  },
+  {
+    text: "Une université est juste un groupe de bâtiments rassemblés autour d'une bibliothèque.",
+    author: "Shelby Foote"
+  }
+];
 
 const Home = () => {
   const { user } = useAuth();
-  const searchParams = useSearchParams();
-  const config = useConfig();
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [categories, setCategories] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalBooks, setTotalBooks] = useState(0);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [showFilters, setShowFilters] = useState(false);
+  const [randomQuote, setRandomQuote] = useState(quotes[0]);
+  const [quoteIndex, setQuoteIndex] = useState(0);
 
   useEffect(() => {
-    const searchFromUrl = searchParams?.get('search');
-    if (searchFromUrl) {
-      setSearchTerm(searchFromUrl);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    fetchBooks();
-    fetchCategories();
-  }, [searchTerm, selectedCategory, currentPage]);
-
-  const fetchBooks = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const params: any = {
-        page: currentPage,
-        limit: config.ITEMS_PER_PAGE,
-      };
-      
-      if (searchTerm.trim()) {
-        params.search = searchTerm.trim();
-      }
-      
-      if (selectedCategory) {
-        params.category = selectedCategory;
-      }
-
-      const response = await bookService.getBooks(params);
-      if (response.success && response.data) {
-        setBooks(response.data.books);
-        setTotalBooks(response.data.total || response.data.books.length);
-      } else {
-        setError(response.message || 'Erreur lors du chargement des livres');
-        setBooks([]);
-      }
-    } catch (e: any) {
-      setBooks([]);
-      setError('Erreur lors du chargement des livres');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await bookService.getCategories();
-      if (response.success && response.data) {
-        setCategories(response.data);
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement des catégories:', error);
-    }
-  };
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    setCurrentPage(1);
-  };
-
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-  };
-
-  const totalPages = Math.ceil(totalBooks / config.ITEMS_PER_PAGE);
-
-  const getBookImageUrl = (book: Book) => {
-    if (book.cover_image) {
-      return utils.getImageUrl(book.cover_image);
-    }
-    return `https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=400&fit=crop&q=80`;
-  };
-
-  const statsCards = [
-    {
-      title: "Livres disponibles",
-      value: totalBooks.toLocaleString(),
-      icon: BookOpen,
-      color: "from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)]",
-      bg: "bg-[var(--color-accent-primary)]/10"
-    },
-    {
-      title: "Catégories",
-      value: categories.length.toString(),
-      icon: Filter,
-      color: "from-[var(--color-accent-secondary)] to-[var(--color-accent-tertiary)]",
-      bg: "bg-[var(--color-accent-secondary)]/10"
-    },
-    {
-      title: "Mes emprunts",
-      value: "3", // À connecter avec les vraies données
-      icon: Clock,
-      color: "from-[var(--color-accent-tertiary)] to-[var(--color-accent-primary)]",
-      bg: "bg-[var(--color-accent-tertiary)]/10"
-    },
-    {
-      title: "Favoris",
-      value: "12", // À connecter avec les vraies données
-      icon: Heart,
-      color: "from-[var(--color-accent-primary)] to-[var(--color-accent-tertiary)]",
-      bg: "bg-[var(--color-accent-primary)]/10"
-    }
-  ];
+    // Initialiser avec une citation aléatoire
+    const initialIndex = Math.floor(Math.random() * quotes.length);
+    setQuoteIndex(initialIndex);
+    setRandomQuote(quotes[initialIndex]);
+    
+    // Changer la citation toutes les 10 secondes
+    const interval = setInterval(() => {
+      setQuoteIndex((prevIndex) => {
+        const newIndex = (prevIndex + 1) % quotes.length;
+        setRandomQuote(quotes[newIndex]);
+        return newIndex;
+      });
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[var(--color-bg-main)] via-[var(--color-bg-alt)] to-[var(--color-bg-main)]">
@@ -157,13 +67,13 @@ const Home = () => {
       {/* Texture de fond */}
       <div className="fixed inset-0 bg-pattern opacity-[0.015] pointer-events-none z-0"></div>
       
-      <div className="relative z-10 pt-6">
+      <div className="relative z-10 pt-16">
         {/* Hero Section */}
-        <div className="max-w-7xl mx-auto px-6 mb-12">
+        <div className="max-w-7xl mx-auto px-6">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            className="text-center mb-16"
           >
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
               <span className="text-[var(--color-text-primary)]">Bonjour </span>
@@ -177,216 +87,84 @@ const Home = () => {
             </p>
           </motion.div>
 
-          {/* Stats Cards */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+          {/* Citation inspirante */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+            className="mb-20 relative overflow-hidden rounded-3xl shadow-2xl max-w-5xl mx-auto"
           >
-            {statsCards.map((stat, index) => (
-              <motion.div
-                key={stat.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + index * 0.1 }}
-                className="glass-effect-strong rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
-                    <stat.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                    <p className="text-slate-600 text-sm font-medium">{stat.title}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            <div className="relative h-[400px] w-full bg-gradient-to-br from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] flex items-center justify-center">
+              {/* Citation avec animation */}
+              <div className="text-center p-8 md:p-12 text-white max-w-4xl">
+                <Quote className="w-16 h-16 text-white/80 mb-6 mx-auto" />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={quoteIndex}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+                      {randomQuote.text}
+                    </h2>
+                    <p className="text-white/90 text-xl md:text-2xl font-medium">— {randomQuote.author}</p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
           </motion.div>
 
-          {/* Barre de recherche et filtres */}
-          <motion.div 
+          {/* Accès rapides */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="glass-effect-strong rounded-3xl shadow-2xl p-8 mb-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20"
           >
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* Recherche */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Rechercher un livre, un auteur, un sujet..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]/70 focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium text-lg"
-                />
-              </div>
-              
-              {/* Filtres */}
-              <div className="flex gap-4">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="px-6 py-4 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-2xl text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-accent-primary)]/20 focus:border-[var(--color-accent-secondary)] focus:bg-white transition-all duration-300 shadow-sm focus:shadow-lg font-medium min-w-[200px]"
-                >
-                  <option value="">Toutes les catégories</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-                
-                {/* Toggle vue */}
-                <div className="flex items-center gap-2 bg-[var(--glass-bg)] rounded-2xl p-1.5 shadow-sm">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-3 rounded-xl transition-all duration-200 ${
-                      viewMode === 'grid' 
-                        ? 'bg-white shadow-md text-[var(--color-accent-primary)]' 
-                        : 'hover:bg-white/60 text-[var(--color-text-secondary)]'
-                    }`}
-                  >
-                    <Grid className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-3 rounded-xl transition-all duration-200 ${
-                      viewMode === 'list' 
-                        ? 'bg-white shadow-md text-[var(--color-accent-primary)]' 
-                        : 'hover:bg-white/60 text-[var(--color-text-secondary)]'
-                    }`}
-                  >
-                    <List className="w-5 h-5" />
-                  </button>
+            <Link href="/books" className="block">
+              <div className="glass-effect-strong rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/20 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--color-accent-primary)] to-[var(--color-hover-primary)]"></div>
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-accent-primary)] to-[var(--color-hover-primary)] flex items-center justify-center mb-6 shadow-lg">
+                  <BookOpen className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">Catalogue</h3>
+                <p className="text-[var(--color-text-secondary)] mb-6">Explorez notre vaste collection de livres académiques et de ressources</p>
+                <div className="flex items-center text-[var(--color-accent-primary)] font-semibold group-hover:translate-x-2 transition-transform duration-300">
+                  Explorer <ArrowRight className="ml-2 w-5 h-5" />
                 </div>
               </div>
-            </div>
+            </Link>
             
-            {/* Résumé des filtres */}
-            {(searchTerm || selectedCategory) && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mt-6 pt-6 border-t border-[var(--color-border)] flex items-center gap-4 text-[var(--color-text-secondary)]"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="font-medium">
-                  {totalBooks} résultat{totalBooks !== 1 ? 's' : ''} trouvé{totalBooks !== 1 ? 's' : ''}
-                  {searchTerm && ` pour "${searchTerm}"`}
-                  {selectedCategory && ` dans "${selectedCategory}"`}
-                </span>
-              </motion.div>
-            )}
-          </motion.div>
-        </div>
-
-        {/* Contenu principal */}
-        <div className="max-w-7xl mx-auto px-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <motion.div 
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-12 h-12 border-4 border-[var(--color-accent-secondary)]/20 border-t-[var(--color-accent-primary)] rounded-full"
-              />
-            </div>
-          ) : error ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-[var(--color-error)]/10 border border-[var(--color-error)]/20 rounded-2xl p-8 text-center"
-            >
-              <p className="text-[var(--color-error)] font-medium">{error}</p>
-            </motion.div>
-          ) : books.length === 0 ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-effect-strong rounded-3xl shadow-xl p-16 text-center"
-            >
-              <BookOpen className="w-16 h-16 text-[var(--color-text-secondary)] mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">Aucun livre trouvé</h3>
-              <p className="text-[var(--color-text-secondary)] text-lg">
-                Essayez de modifier vos critères de recherche ou explorez d'autres catégories.
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className={`grid gap-6 mb-12 ${
-                viewMode === 'grid' 
-                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                  : 'grid-cols-1'
-              }`}
-            >
-              {books.map((book, index) => (
-                <motion.div
-                  key={book.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <BookCard book={book} viewMode={viewMode} />
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-
-          {/* Navigation rapide */}
-          {!loading && !error && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="glass-effect-strong rounded-3xl shadow-xl p-8 mb-12"
-            >
-              <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6 text-center">
-                Accès rapide
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/books" className="group">
-                  <div className="bg-gradient-to-br from-[var(--color-accent-primary)]/5 to-[var(--color-accent-secondary)]/5 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border border-[var(--color-accent-primary)]/10">
-                    <BookOpen className="w-12 h-12 text-[var(--color-accent-primary)] mb-4" />
-                    <h4 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">Catalogue complet</h4>
-                    <p className="text-[var(--color-text-secondary)] mb-4">Explorez toute notre collection</p>
-                    <div className="flex items-center text-[var(--color-accent-primary)] font-medium">
-                      <span>Découvrir</span>
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </Link>
-                
-                <Link href="/dashboard/loans" className="group">
-                  <div className="bg-gradient-to-br from-[var(--color-accent-secondary)]/5 to-[var(--color-accent-tertiary)]/5 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border border-[var(--color-accent-secondary)]/10">
-                    <Clock className="w-12 h-12 text-[var(--color-accent-secondary)] mb-4" />
-                    <h4 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">Mes emprunts</h4>
-                    <p className="text-[var(--color-text-secondary)] mb-4">Gérez vos livres empruntés</p>
-                    <div className="flex items-center text-[var(--color-accent-secondary)] font-medium">
-                      <span>Voir</span>
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </Link>
-                
-                <Link href="/dashboard/profile" className="group">
-                  <div className="bg-gradient-to-br from-[var(--color-accent-tertiary)]/5 to-[var(--color-accent-primary)]/5 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 border border-[var(--color-accent-tertiary)]/10">
-                    <Users className="w-12 h-12 text-[var(--color-accent-tertiary)] mb-4" />
-                    <h4 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">Mon profil</h4>
-                    <p className="text-[var(--color-text-secondary)] mb-4">Paramètres et préférences</p>
-                    <div className="flex items-center text-[var(--color-accent-tertiary)] font-medium">
-                      <span>Accéder</span>
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </Link>
+            <Link href="/dashboard" className="block">
+              <div className="glass-effect-strong rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/20 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--color-accent-secondary)] to-[var(--color-hover-secondary)]"></div>
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-accent-secondary)] to-[var(--color-hover-secondary)] flex items-center justify-center mb-6 shadow-lg">
+                  {user?.role === 'admin' ? <Users className="w-8 h-8 text-white" /> : <GraduationCap className="w-8 h-8 text-white" />}
+                </div>
+                <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">{user?.role === 'admin' ? 'Administration' : 'Mon Espace'}</h3>
+                <p className="text-[var(--color-text-secondary)] mb-6">{user?.role === 'admin' ? 'Gérez les utilisateurs, les livres et les emprunts' : 'Accédez à vos emprunts, réservations et profil'}</p>
+                <div className="flex items-center text-[var(--color-accent-primary)] font-semibold group-hover:translate-x-2 transition-transform duration-300">
+                  Explorer <ArrowRight className="ml-2 w-5 h-5" />
+                </div>
               </div>
-            </motion.div>
-          )}
+            </Link>
+            
+            <Link href="/search" className="block">
+              <div className="glass-effect-strong rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/20 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--color-accent-tertiary)] to-[var(--color-hover-tertiary)]"></div>
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-accent-tertiary)] to-[var(--color-hover-tertiary)] flex items-center justify-center mb-6 shadow-lg">
+                  <Search className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">Recherche</h3>
+                <p className="text-[var(--color-text-secondary)] mb-6">Trouvez rapidement les ressources dont vous avez besoin</p>
+                <div className="flex items-center text-[var(--color-accent-primary)] font-semibold group-hover:translate-x-2 transition-transform duration-300">
+                  Explorer <ArrowRight className="ml-2 w-5 h-5" />
+                </div>
+              </div>
+            </Link>
+          </motion.div>
         </div>
       </div>
     </div>
