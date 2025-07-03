@@ -1,0 +1,427 @@
+'use client';
+
+import Link from 'next/link';
+import { useAuth } from '../contexts/AuthContext';
+import { useConfig } from '../contexts/ConfigContext';
+import { useState, useEffect } from 'react';
+import { notificationService } from '../lib/api';
+import { 
+  Search, Bell, BookOpen, User, LogOut, Menu, X, 
+  Home, Library, Settings, Zap, Star
+} from 'lucide-react';
+
+const Header = () => {
+  const { user, logout } = useAuth();
+  const config = useConfig();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadNotificationCount();
+    }
+  }, [user]);
+
+  const loadNotificationCount = async () => {
+    try {
+      const response = await notificationService.getMyNotifications();
+      if (response.success && response.data) {
+        const unread = response.data.filter(n => !n.is_read).length;
+        setUnreadCount(unread);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des notifications:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      await logout();
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      window.location.href = `/?search=${encodeURIComponent(searchTerm.trim())}`;
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <header className="sticky top-0 z-50 glass-card border-b border-white/10">
+      <div className="container-modern">
+        <div className="flex items-center justify-between h-20">
+          
+          {/* Logo & Brand */}
+          <Link href="/" className="flex items-center gap-3 hover-lift">
+            <div className="w-12 h-12 glass-card rounded-2xl flex items-center justify-center quantum-border animate-glow-pulse">
+              <BookOpen className="w-7 h-7 neon-blue" />
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-2xl font-black gradient-text">YORI</h1>
+              <p className="text-xs text-white/60 font-semibold -mt-1">Quantum Library</p>
+            </div>
+          </Link>
+
+          {/* Search Bar Desktop */}
+          <form 
+            onSubmit={handleSearch}
+            className="hidden md:flex items-center flex-1 max-w-md mx-8"
+          >
+            <div className="relative w-full">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Rechercher des livres..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-input-modern pl-12 pr-4 py-3 text-white placeholder-white/50 focus-ring"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 btn-neon p-2 rounded-lg"
+              >
+                <Zap className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2 text-white/80 hover:text-white transition-colors group">
+              <Home className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span className="font-medium">Accueil</span>
+            </Link>
+            
+            <Link href="/books" className="flex items-center gap-2 text-white/80 hover:text-white transition-colors group">
+              <Library className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span className="font-medium">Livres</span>
+            </Link>
+            
+            <Link href="/dashboard" className="flex items-center gap-2 text-white/80 hover:text-white transition-colors group">
+              <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span className="font-medium">Dashboard</span>
+            </Link>
+          </nav>
+
+          {/* User Actions */}
+          <div className="flex items-center gap-4">
+            
+            {/* Notifications */}
+            <Link 
+              href="/dashboard/notifications" 
+              className="relative p-3 glass-card rounded-xl hover:scale-110 transition-all group"
+            >
+              <Bell className="w-6 h-6 text-white/80 group-hover:text-white" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Link>
+
+            {/* User Menu */}
+            <div className="hidden md:flex items-center gap-4">
+              <div className="flex items-center gap-3 glass-card px-4 py-2 rounded-xl">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">
+                    {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <p className="text-white font-semibold">{user.first_name} {user.last_name}</p>
+                  <p className="text-white/60 text-xs capitalize">{user.role}</p>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleLogout}
+                className="p-3 glass-card rounded-xl hover:scale-110 transition-all hover:border-red-500/50 group"
+              >
+                <LogOut className="w-6 h-6 text-white/80 group-hover:text-red-400" />
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-3 glass-card rounded-xl hover:scale-110 transition-all"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6 text-white" />
+              ) : (
+                <Menu className="w-6 h-6 text-white" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden py-6 border-t border-white/10 animate-scale-in">
+            
+            {/* Mobile Search */}
+            <form onSubmit={handleSearch} className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Rechercher des livres..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-input-modern pl-12 pr-4 py-3 text-white placeholder-white/50 focus-ring"
+                />
+              </div>
+            </form>
+
+            {/* Mobile Navigation */}
+            <nav className="space-y-4 mb-6">
+              <Link 
+                href="/" 
+                className="flex items-center gap-3 text-white/80 hover:text-white transition-colors group p-3 glass-card rounded-xl"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Home className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                <span className="font-semibold">Accueil</span>
+              </Link>
+              
+              <Link 
+                href="/books" 
+                className="flex items-center gap-3 text-white/80 hover:text-white transition-colors group p-3 glass-card rounded-xl"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Library className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                <span className="font-semibold">Livres</span>
+              </Link>
+              
+              <Link 
+                href="/dashboard" 
+                className="flex items-center gap-3 text-white/80 hover:text-white transition-colors group p-3 glass-card rounded-xl"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <User className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                <span className="font-semibold">Dashboard</span>
+              </Link>
+            </nav>
+
+            {/* Mobile User Info */}
+            <div className="glass-card p-4 rounded-xl mb-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold">
+                    {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-white font-semibold">{user.first_name} {user.last_name}</p>
+                  <p className="text-white/60 text-sm capitalize">{user.role}</p>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 btn-neon py-3"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="font-semibold">Se déconnecter</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+};
+
+export default Header;
+      <div style={leftContainerStyle}>
+        <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <h1 style={titleStyle}>{config.APP_NAME}</h1>
+        </Link>
+        <form onSubmit={handleSearch} style={{ display: 'flex', flex: 1, maxWidth: '500px' }}>
+          <input
+            type="text"
+            placeholder="Rechercher un livre, un auteur..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={searchInputStyle}
+          />
+          <button type="submit" style={searchButtonStyle}>
+            🔍
+          </button>
+        </form>
+      </div>
+      
+      <div style={rightContainerStyle}>
+        {/* Notifications */}
+        <Link href="/dashboard/notifications" style={notificationLinkStyle}>
+          <span style={notificationIconStyle}>
+            🔔
+            {unreadCount > 0 && (
+              <span style={notificationBadgeStyle}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </span>
+        </Link>
+
+        {/* Menu utilisateur */}
+        <div style={userMenuStyle}>
+          <Link href="/dashboard/profile" style={userLinkStyle}>
+            <div style={avatarStyle}>
+              {user.first_name?.[0]?.toUpperCase()}{user.last_name?.[0]?.toUpperCase()}
+            </div>
+            <span style={userNameStyle}>
+              {user.first_name} {user.last_name}
+            </span>
+          </Link>
+          
+          <Link href="/dashboard" style={dashboardLinkStyle}>
+            Dashboard
+          </Link>
+          
+          <button onClick={handleLogout} style={logoutButtonStyle}>
+            Déconnexion
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+const headerStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '1rem 2rem',
+  background: '#f8eadd',
+  borderBottom: '1px solid #daa4a4',
+  position: 'sticky',
+  top: 0,
+  zIndex: 1000,
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+};
+
+const leftContainerStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '20px',
+  flex: 1
+};
+
+const titleStyle: React.CSSProperties = {
+  fontSize: '24px',
+  fontWeight: 'bold',
+  color: '#333',
+  margin: 0,
+  fontFamily: '"Lora", serif'
+};
+
+const searchInputStyle: React.CSSProperties = {
+  flex: 1,
+  padding: '10px 15px',
+  border: '1px solid #daa4a4',
+  borderRadius: '25px 0 0 25px',
+  fontSize: '14px',
+  outline: 'none',
+  fontFamily: '"Lora", serif'
+};
+
+const searchButtonStyle: React.CSSProperties = {
+  padding: '10px 15px',
+  background: '#daa4a4',
+  border: '1px solid #daa4a4',
+  borderLeft: 'none',
+  borderRadius: '0 25px 25px 0',
+  cursor: 'pointer',
+  fontSize: '14px'
+};
+
+const rightContainerStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '20px'
+};
+
+const notificationLinkStyle: React.CSSProperties = {
+  position: 'relative',
+  textDecoration: 'none'
+};
+
+const notificationIconStyle: React.CSSProperties = {
+  fontSize: '20px',
+  position: 'relative',
+  display: 'inline-block'
+};
+
+const notificationBadgeStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: '-8px',
+  right: '-8px',
+  background: '#ff4444',
+  color: 'white',
+  borderRadius: '10px',
+  padding: '2px 6px',
+  fontSize: '10px',
+  fontWeight: 'bold',
+  minWidth: '16px',
+  textAlign: 'center'
+};
+
+const userMenuStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '15px'
+};
+
+const userLinkStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  textDecoration: 'none',
+  color: '#333'
+};
+
+const avatarStyle: React.CSSProperties = {
+  width: '35px',
+  height: '35px',
+  borderRadius: '50%',
+  background: '#daa4a4',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '14px',
+  fontWeight: 'bold',
+  color: 'white'
+};
+
+const userNameStyle: React.CSSProperties = {
+  fontSize: '14px',
+  fontWeight: '500'
+};
+
+const dashboardLinkStyle: React.CSSProperties = {
+  padding: '8px 16px',
+  background: '#4488ff',
+  color: 'white',
+  textDecoration: 'none',
+  borderRadius: '20px',
+  fontSize: '14px',
+  fontWeight: '500'
+};
+
+const logoutButtonStyle: React.CSSProperties = {
+  padding: '8px 16px',
+  background: '#ff4444',
+  color: 'white',
+  border: 'none',
+  borderRadius: '20px',
+  cursor: 'pointer',
+  fontSize: '14px',
+  fontWeight: '500'
+};
+
+export default Header;

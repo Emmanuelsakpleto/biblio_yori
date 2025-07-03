@@ -12,6 +12,52 @@ const DashboardContent = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Mes emprunts</CardTitle>
+            <CardDescription>Voir et gérer mes emprunts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <a href="/dashboard/loans" className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 mb-2">
+              Voir mes emprunts
+              <ChevronRight className="h-3 w-3 ml-1" />
+            </a>
+            <a href="/dashboard/loans/actions" className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+              Retourner / Prolonger
+              <ChevronRight className="h-3 w-3 ml-1" />
+            </a>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Mes notifications</CardTitle>
+            <CardDescription>Consulter mes notifications</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <a href="/dashboard/notifications" className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+              Voir mes notifications
+              <ChevronRight className="h-3 w-3 ml-1" />
+            </a>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Mes avis</CardTitle>
+            <CardDescription>Voir et ajouter un avis</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <a href="/dashboard/reviews" className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 mb-2">
+              Voir mes avis
+              <ChevronRight className="h-3 w-3 ml-1" />
+            </a>
+            <a href="/dashboard/reviews/add" className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+              Ajouter un avis
+              <ChevronRight className="h-3 w-3 ml-1" />
+            </a>
+          </CardContent>
+        </Card>
+      </div>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Revenus</CardTitle>

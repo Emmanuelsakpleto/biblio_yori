@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Editor, useDomValue } from 'reactjs-editor';
-import { books, Book } from '../data/books';
+import { bookService, loanService, type Book } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 import '../app/styles/BookContent.css';
 
 interface BookContentProps {
@@ -16,13 +17,72 @@ interface BookContentProps {
 const BookContent = ({ bookId }: BookContentProps) => {
   const router = useRouter();
   const { dom, setDom } = useDomValue();
-  const [selectedBook, setSelectedBook] = useState<Book | undefined>(books.find((book: Book) => book.id === parseInt(bookId)));
+  const { user } = useAuth();
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [canBorrow, setCanBorrow] = useState(false);
+  const [borrowing, setBorrowing] = useState(false);
+
+  useEffect(() => {
+    fetchBook();
+  }, [bookId]);
+
+  const fetchBook = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await bookService.getBook(parseInt(bookId));
+      if (response.success && response.data) {
+        setSelectedBook(response.data);
+        setCanBorrow(response.data.available_copies > 0 && user !== null);
+      } else {
+        setError(response.message || 'Livre introuvable');
+      }
+    } catch (e: any) {
+      setError('Erreur lors du chargement du livre');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBorrow = async () => {
+    if (!selectedBook || !user) return;
+    
+    try {
+      setBorrowing(true);
+      const response = await loanService.createLoan(selectedBook.id);
+      
+      if (response.success) {
+        toast.success('Livre emprunté avec succès !', {
+          style: { background: "#22c55e", color: '#fff' },
+          hideProgressBar: true
+        });
+        
+        // Mettre à jour les informations du livre
+        fetchBook();
+      } else {
+        toast.error(response.message || 'Erreur lors de l\'emprunt', {
+          style: { background: "#ef4444", color: '#fff' },
+          hideProgressBar: true
+        });
+      }
+    } catch (error) {
+      toast.error('Erreur lors de l\'emprunt', {
+        style: { background: "#ef4444", color: '#fff' },
+        hideProgressBar: true
+      });
+    } finally {
+      setBorrowing(false);
+    }
+  };
 
   const handleGoBack = () => {
     router.back();
   };
 
-  const notify = () => toast("HTML content saved.", {
+  const notify = () => toast("Contenu sauvegardé.", {
     style: { background: "#f2dfce", color: '#000' },
     hideProgressBar: true
   });
@@ -50,8 +110,38 @@ const BookContent = ({ bookId }: BookContentProps) => {
     }
   }, [selectedBook, setDom]);
 
-  if (!selectedBook) {
-    return <div>Book not found</div>;
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <div style={{ fontSize: '18px', marginBottom: '20px' }}>
+          Chargement du livre...
+        </div>
+        <div style={{ 
+          width: '40px', 
+          height: '40px', 
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #daa4a4',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto'
+        }}></div>
+      </div>
+    );
+  }
+
+  if (error || !selectedBook) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <h3 style={{ color: '#ef4444' }}>❌ {error || 'Livre introuvable'}</h3>
+        <button 
+          onClick={() => router.back()}
+          className="saveButton"
+          style={{ marginTop: '20px' }}
+        >
+          Retour
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -79,19 +169,46 @@ const BookContent = ({ bookId }: BookContentProps) => {
           </h2>
         </div>
         <div className="icons">
-          <button className='saveButton' onClick={handleSave}>Save</button>
+          {canBorrow && (
+            <button 
+              className='saveButton' 
+              onClick={handleBorrow}
+              disabled={borrowing}
+              style={{ marginRight: '10px', background: '#22c55e' }}
+            >
+              {borrowing ? 'Emprunt...' : 'Emprunter'}
+            </button>
+          )}
+          <button className='saveButton' onClick={handleSave}>Sauvegarder</button>
           <i style={{ marginRight: '20px', fontSize: '20px' }} className="fas fa-cog"></i>
           <i style={{ marginRight: '20px', fontSize: '20px' }} className="fas fa-share"></i>
           <i style={{ marginRight: '20px', fontSize: '20px' }} className="fas fa-search"></i>
         </div>
       </motion.section>
 
+      <div style={{ padding: '20px', background: '#f8eadd', margin: '20px', borderRadius: '20px' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <h1>{selectedBook.title}</h1>
+          <p><strong>Auteur:</strong> {selectedBook.author}</p>
+          <p><strong>Catégorie:</strong> {selectedBook.category}</p>
+          <p><strong>ISBN:</strong> {selectedBook.isbn}</p>
+          <p><strong>Année de publication:</strong> {selectedBook.publication_year}</p>
+          <p><strong>Disponibilité:</strong> {selectedBook.available_copies}/{selectedBook.total_copies} exemplaires</p>
+          <p><strong>Description:</strong> {selectedBook.description}</p>
+        </div>
+      </div>
+
       <Editor
         htmlContent={`<main className='bookContainer'>
           <aside>
             <h1 className="center">${selectedBook.title}</h1>
-            <span className='center small'> By ${selectedBook.author}</span>
-            ${selectedBook.content}
+            <span className='center small'> Par ${selectedBook.author}</span>
+            <div style="margin-top: 20px;">
+              <p><strong>Catégorie:</strong> ${selectedBook.category}</p>
+              <p><strong>Description:</strong> ${selectedBook.description || 'Aucune description disponible'}</p>
+              <br>
+              <p>Contenu du livre à venir...</p>
+            </div>
           </aside>
         </main>`}
       />

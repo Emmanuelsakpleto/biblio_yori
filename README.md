@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# 📚 YORI - Frontend
 
-First, run the development server:
+Frontend Next.js pour la plateforme de gestion de bibliothèque YORI.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Démarrage rapide
+
+1. Copier `.env.local.example` en `.env.local` et configurer les variables d'environnement (voir backend).
+2. Installer les dépendances :
+   ```bash
+   npm install
+   ```
+3. Lancer le serveur de développement :
+   ```bash
+   npm run dev
+   ```
+4. Accéder à [http://localhost:3000](http://localhost:3000)
+
+## Fonctionnalités principales
+
+- Authentification JWT (connexion, inscription, refresh, logout)
+- Dashboard utilisateur (profil, emprunts, notifications, avis)
+- Recherche et consultation de livres
+- Responsive, accessible, SEO optimisé
+- Connexion API backend sécurisée
+
+## Structure du projet
+
+```
+app/
+  dashboard/
+    profile/
+    ...
+  styles/
+components/
+contexts/
+hooks/
+lib/
+public/
+types/
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Bonnes pratiques
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Variables d'environnement dans `.env.local`
+- Appels API centralisés dans `lib/api.ts`
+- Types TypeScript dans `types/`
+- Composants réutilisables dans `components/`
+- Respect des styles globaux (`globals.css`, `BookContent.css`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Nettoyage
 
-## Learn More
+- Les mocks et fichiers inutiles ont été supprimés.
+- Les données proviennent exclusivement du backend.
 
-To learn more about Next.js, take a look at the following resources:
+## Pour toute contribution
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Merci de respecter la structure et les conventions du projet.
