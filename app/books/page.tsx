@@ -55,17 +55,23 @@ export default function BooksPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [borrowingBooks, setBorrowingBooks] = useState<Set<number>>(new Set());
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [totalBooks, setTotalBooks] = useState(0);
 
   // Charger les livres
   useEffect(() => {
     const fetchBooks = async () => {
       try {
         setLoading(true);
-        const response = await bookService.getBooks({ limit: 50 });
+        const response = await bookService.getBooks({ limit: 100 }); // Augmenter la limite pour récupérer tous les livres
         
         if (response?.success && response.data?.books) {
           setBooks(response.data.books);
           setFilteredBooks(response.data.books);
+          
+          // Sauvegarder le total réel depuis la pagination
+          if (response.data.pagination?.total) {
+            setTotalBooks(response.data.pagination.total);
+          }
           
           // Générer les catégories avec compteurs
           const categoryMap = new Map();
@@ -251,7 +257,7 @@ export default function BooksPage() {
                 Catalogue de la Bibliothèque
               </h1>
               <p className="text-slate-600 text-xl font-medium">
-                Découvrez notre collection de <span className="text-blue-600 font-semibold">{books.length}</span> livres
+                Découvrez notre collection de <span className="text-blue-600 font-semibold">{totalBooks}</span> livres
               </p>
             </div>
             

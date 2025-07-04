@@ -4,7 +4,8 @@ const nextConfig = {
     domains: [
       'api.dicebear.com',
       'images.unsplash.com',
-      'plus.unsplash.com'
+      'plus.unsplash.com',
+      'localhost'
     ],
   },
 };

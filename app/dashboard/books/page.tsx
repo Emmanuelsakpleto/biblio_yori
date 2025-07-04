@@ -14,7 +14,9 @@ import {
   Eye,
   Users,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  ArrowLeft,
+  Home
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { bookService, type Book } from '../../../lib/api';
@@ -69,7 +71,9 @@ const BooksManagementPage = () => {
     try {
       const response = await bookService.getCategories();
       if (response.success && response.data) {
-        setCategories(response.data);
+        // Extraire juste les noms des catégories depuis les objets
+        const categoryNames = response.data.map((cat: any) => cat.category);
+        setCategories(categoryNames);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des catégories:', error);
@@ -118,13 +122,27 @@ const BooksManagementPage = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-4xl font-bold text-[var(--color-text-primary)] mb-2">
-                Gestion des Livres
-              </h1>
-              <p className="text-[var(--color-text-secondary)]">
-                Administration de la collection de la bibliothèque
-              </p>
+            <div className="flex items-center gap-4">
+              {/* Bouton retour à l'accueil */}
+              <Link
+                href="/"
+                className="flex items-center gap-2 px-4 py-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/20 rounded-xl transition-all duration-200 group"
+              >
+                <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" />
+                <Home className="w-4 h-4" />
+                <span className="font-medium">Accueil</span>
+              </Link>
+              
+              <div className="h-6 w-px bg-[var(--color-text-secondary)]/30"></div>
+              
+              <div>
+                <h1 className="text-4xl font-bold text-[var(--color-text-primary)] mb-2">
+                  Gestion des Livres
+                </h1>
+                <p className="text-[var(--color-text-secondary)]">
+                  Administration de la collection de la bibliothèque
+                </p>
+              </div>
             </div>
             <Link 
               href="/dashboard/books/add"
@@ -299,7 +317,7 @@ const BooksManagementPage = () => {
                   </div>
                   <div className="col-span-2 flex gap-2">
                     <Link 
-                      href={`/dashboard/books/${book.id}`}
+                      href={`/book/${book.id}`}
                       className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
                                transition-colors"
                       title="Voir les détails"

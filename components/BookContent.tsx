@@ -24,6 +24,8 @@ const BookContent = ({ bookId }: BookContentProps) => {
   const [canBorrow, setCanBorrow] = useState(false);
   const [borrowing, setBorrowing] = useState(false);
 
+  console.log('🔥 BookContent component is loading for bookId:', bookId);
+
   useEffect(() => {
     fetchBook();
   }, [bookId]);
@@ -80,6 +82,10 @@ const BookContent = ({ bookId }: BookContentProps) => {
 
   const handleGoBack = () => {
     router.back();
+  };
+
+  const handleGoHome = () => {
+    router.push('/');
   };
 
   const notify = () => toast("Contenu sauvegardé.", {
@@ -156,8 +162,72 @@ const BookContent = ({ bookId }: BookContentProps) => {
         animate={{ opacity: 1, y: 0 }} 
         className='appBar'
       >
-        <div className="left-icons" onClick={handleGoBack}>
-          <i style={{ fontSize: '20px', cursor: 'pointer' }} className="fas fa-chevron-left"></i>
+        <div className="left-icons" style={{ 
+          display: 'flex', 
+          gap: '15px', 
+          alignItems: 'center',
+          padding: '5px'
+        }}>
+          <button 
+            onClick={handleGoBack} 
+            style={{ 
+              cursor: 'pointer',
+              padding: '10px 15px',
+              borderRadius: '8px',
+              transition: 'all 0.2s',
+              backgroundColor: '#daa4a4',
+              color: '#fff',
+              border: 'none',
+              fontSize: '14px',
+              fontWeight: '600',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+            onMouseEnter={(e) => {
+              (e.target as HTMLElement).style.backgroundColor = '#c89393';
+              (e.target as HTMLElement).style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              (e.target as HTMLElement).style.backgroundColor = '#daa4a4';
+              (e.target as HTMLElement).style.transform = 'translateY(0)';
+            }}
+            title="Retour à la page précédente"
+          >
+            <i style={{ fontSize: '16px' }} className="fas fa-chevron-left"></i>
+            <span>Retour</span>
+          </button>
+          <button 
+            onClick={handleGoHome} 
+            style={{ 
+              cursor: 'pointer',
+              padding: '10px 15px',
+              borderRadius: '8px',
+              transition: 'all 0.2s',
+              backgroundColor: '#22c55e',
+              color: '#fff',
+              border: 'none',
+              fontSize: '14px',
+              fontWeight: '600',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+            onMouseEnter={(e) => {
+              (e.target as HTMLElement).style.backgroundColor = '#16a34a';
+              (e.target as HTMLElement).style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              (e.target as HTMLElement).style.backgroundColor = '#22c55e';
+              (e.target as HTMLElement).style.transform = 'translateY(0)';
+            }}
+            title="Retour à l'accueil"
+          >
+            <i style={{ fontSize: '16px' }} className="fas fa-home"></i>
+            <span>Accueil</span>
+          </button>
         </div>
         <div className="title">
           <h2 style={{
@@ -219,3 +289,4 @@ const BookContent = ({ bookId }: BookContentProps) => {
 };
 
 export default BookContent;
+console.log('��� FICHIER ACTUEL: BookContent.tsx - Page de détail livre');

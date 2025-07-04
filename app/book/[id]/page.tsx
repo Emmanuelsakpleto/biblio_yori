@@ -7,6 +7,7 @@ interface BookPageProps {
 }
 
 export default function BookPage({ params }: BookPageProps) {
+  console.log('📖 BookPage component is loading for ID:', params.id);
   return <BookContent bookId={params.id} />;
 }
 
