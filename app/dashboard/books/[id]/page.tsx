@@ -14,6 +14,7 @@ import {
   FileText,
   MapPin,
   Edit,
+  Trash2,
   Download,
   Heart,
   Share2,
@@ -153,6 +154,43 @@ export default function BookDetailsPage() {
     setMessage({ text: 'Copié dans le presse-papiers', type: 'success' });
   };
 
+  const handleDeleteBook = async () => {
+    if (!book) return;
+    
+    // Double confirmation pour la suppression
+    const confirmMessage = `Êtes-vous sûr de vouloir supprimer le livre "${book.title}" ?\n\nCette action est irréversible et supprimera définitivement le livre de la base de données.`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+    
+    // Deuxième confirmation
+    const finalConfirm = confirm("Dernière confirmation : Supprimer définitivement ce livre ?");
+    if (!finalConfirm) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const response = await bookService.deleteBook(book.id);
+      
+      if (response.success) {
+        setMessage({ text: 'Livre supprimé avec succès', type: 'success' });
+        // Redirection après un court délai
+        setTimeout(() => {
+          router.push('/dashboard/books');
+        }, 2000);
+      } else {
+        setMessage({ text: response.error || 'Erreur lors de la suppression', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      setMessage({ text: 'Erreur lors de la suppression du livre', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[var(--color-bg-main)] via-[var(--color-bg-alt)] to-[var(--color-bg-main)] flex items-center justify-center">
@@ -209,6 +247,17 @@ export default function BookDetailsPage() {
                   Modifier
                 </Button>
               </Link>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                onClick={handleDeleteBook}
+                disabled={loading}
+              >
+                <Trash2 className="h-4 w-4" />
+                Supprimer
+              </Button>
             </div>
           )}
         </div>
