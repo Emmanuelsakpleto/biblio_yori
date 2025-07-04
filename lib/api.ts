@@ -65,18 +65,34 @@ interface Loan {
   loan_date: string;
   due_date: string;
   return_date?: string;
-  status: 'active' | 'returned' | 'overdue' | 'reserved';
+  status: 'pending' | 'active' | 'returned' | 'overdue' | 'reserved' | 'cancelled' | 'refused';
   renewals_count: number;
   late_fee?: number;
   notes?: string;
   book?: Book;
   user?: UserProfile;
+  // Champs à plat pour compat backend
+  title?: string;
+  author?: string;
 }
 
 interface Notification {
   id: number;
   user_id: number;
-  type: 'loan_reminder' | 'overdue_notice' | 'reservation_ready' | 'book_returned' | 'account_created' | 'password_reset';
+  type:
+    | 'loan_reminder'
+    | 'overdue_notice'
+    | 'reservation_ready'
+    | 'book_returned'
+    | 'account_created'
+    | 'password_reset'
+    | 'reservation_cancelled'
+    | 'reservation_refused'
+    | 'admin_reminder'
+    | 'loan_validated'
+    | 'loan_created'
+    | 'loan_overdue'
+    | 'loan_renewed';
   title: string;
   message: string;
   is_read: boolean;
@@ -450,6 +466,15 @@ export const loanService = {
     return authenticatedFetch('/loans/me');
   },
 
+  async getAllLoans(params?: { status?: string, user_id?: number, page?: number, limit?: number }): Promise<ApiResponse<{ loans: Loan[], pagination: any }>> {
+    const query = new URLSearchParams();
+    if (params?.status) query.append('status', params.status);
+    if (params?.user_id) query.append('user_id', params.user_id.toString());
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    return authenticatedFetch(`/loans?${query.toString()}`);
+  },
+
   async createLoan(bookId: number): Promise<ApiResponse<Loan>> {
     return authenticatedFetch('/loans', {
       method: 'POST',
@@ -463,6 +488,18 @@ export const loanService = {
     });
   },
 
+  async validateLoan(loanId: number): Promise<ApiResponse<Loan>> {
+    return authenticatedFetch(`/loans/${loanId}/validate`, {
+      method: 'PATCH'
+    });
+  },
+
+  async markAsOverdue(loanId: number): Promise<ApiResponse<Loan>> {
+    return authenticatedFetch(`/loans/${loanId}/overdue`, {
+      method: 'PATCH'
+    });
+  },
+
   async extendLoan(loanId: number): Promise<ApiResponse<Loan>> {
     return authenticatedFetch(`/loans/${loanId}/extend`, {
       method: 'PUT'
@@ -471,6 +508,24 @@ export const loanService = {
 
   async getLoanHistory(): Promise<ApiResponse<Loan[]>> {
     return authenticatedFetch('/loans/history');
+  },
+
+  async cancelLoan(loanId: number): Promise<ApiResponse<Loan>> {
+    return authenticatedFetch(`/loans/${loanId}/cancel`, {
+      method: 'PATCH'
+    });
+  },
+
+  async refuseLoan(loanId: number): Promise<ApiResponse<Loan>> {
+    return authenticatedFetch(`/loans/${loanId}/refuse`, {
+      method: 'PATCH'
+    });
+  },
+
+  async sendReminder(loanId: number): Promise<ApiResponse<void>> {
+    return authenticatedFetch(`/loans/${loanId}/reminder`, {
+      method: 'POST'
+    });
   }
 };
 

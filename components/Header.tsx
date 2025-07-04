@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { notificationService, type Notification } from '../lib/api';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -29,11 +30,26 @@ const Header = () => {
     }
   };
 
-  const notifications = [
-    { id: 1, text: "Nouveau livre disponible", time: "Il y a 2h", type: "info" },
-    { id: 2, text: "Retour de livre dans 2 jours", time: "Il y a 4h", type: "warning" },
-    { id: 3, text: "Votre avis a été publié", time: "Il y a 1j", type: "success" }
-  ];
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setNotifLoading(true);
+    notificationService.getMyNotifications()
+      .then(res => {
+        if (res.success && res.data) {
+          if (Array.isArray(res.data)) setNotifications(res.data);
+          else if (Array.isArray(res.data.notifications)) setNotifications(res.data.notifications);
+          else setNotifications([]);
+        } else {
+          setNotifications([]);
+        }
+      })
+      .finally(() => setNotifLoading(false));
+  }, [user]);
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -83,20 +99,43 @@ const Header = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19H6.5A2.5 2.5 0 0 1 4 16.5v-9A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v3.5" />
                     </svg>
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs flex items-center justify-center rounded-full border-2 border-white font-bold">{unreadCount}</span>
+                    )}
                   </button>
 
                   {/* Menu notifications */}
                   {isNotificationOpen && (
-                    <div className="absolute right-0 mt-3 w-80 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-slate-200/60 overflow-hidden animate-slideDown">
-                      <div className="p-4 border-b border-slate-100">
+                    <div className="absolute right-0 mt-3 w-80 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-slate-200/60 overflow-hidden animate-slideDown z-50">
+                      <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                         <h3 className="font-semibold text-slate-800">Notifications</h3>
+                        <Link href="/dashboard/notifications" className="text-xs text-blue-600 hover:underline">Tout voir</Link>
                       </div>
                       <div className="max-h-64 overflow-y-auto">
-                        {notifications.map((notif) => (
-                          <div key={notif.id} className="p-4 hover:bg-slate-50/70 transition-colors border-b border-slate-50 last:border-0">
-                            <p className="text-sm text-slate-700">{notif.text}</p>
-                            <p className="text-xs text-slate-500 mt-1">{notif.time}</p>
+                        {notifLoading ? (
+                          <div className="p-4 text-center text-gray-400">Chargement...</div>
+                        ) : notifications.length === 0 ? (
+                          <div className="p-4 text-center text-gray-400">Aucune notification</div>
+                        ) : notifications.slice(0, 6).map((notif) => (
+                          <div key={notif.id} className={`p-4 border-b border-slate-50 last:border-0 ${!notif.is_read ? 'bg-blue-50/60' : ''}`}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">
+                                {notif.type === 'loan_reminder' && '📚'}
+                                {notif.type === 'overdue_notice' && '⚠️'}
+                                {notif.type === 'reservation_ready' && '✅'}
+                                {notif.type === 'book_returned' && '↩️'}
+                                {notif.type === 'reservation_cancelled' && '❌'}
+                                {notif.type === 'reservation_refused' && '🚫'}
+                                {notif.type === 'admin_reminder' && '🔔'}
+                                {notif.type === 'loan_validated' && '✅'}
+                                {notif.type === 'loan_created' && '📖'}
+                                {notif.type === 'loan_overdue' && '⚠️'}
+                                {notif.type === 'loan_renewed' && '🔄'}
+                              </span>
+                              <span className="text-sm text-slate-700 font-medium truncate">{notif.title}</span>
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1 truncate">{notif.message}</div>
+                            <div className="text-xs text-slate-400 mt-1">{new Date(notif.created_at).toLocaleString()}</div>
                           </div>
                         ))}
                       </div>

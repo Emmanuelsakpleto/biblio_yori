@@ -22,8 +22,11 @@ export default function NotificationsPage() {
       setError(null);
       const response = await notificationService.getMyNotifications();
       if (response.success && response.data) {
-        setNotifications(response.data);
+        if (Array.isArray(response.data)) setNotifications(response.data);
+        else if (Array.isArray(response.data.notifications)) setNotifications(response.data.notifications);
+        else setNotifications([]);
       } else {
+        setNotifications([]);
         setError(response.message || 'Erreur lors du chargement des notifications');
       }
     } catch (err) {
@@ -80,19 +83,38 @@ export default function NotificationsPage() {
       case 'book_returned': return '↩️ Livre retourné';
       case 'account_created': return '🎉 Compte créé';
       case 'password_reset': return '🔐 Mot de passe réinitialisé';
+      case 'reservation_cancelled': return '❌ Réservation annulée';
+      case 'reservation_refused': return '🚫 Réservation refusée';
+      case 'admin_reminder': return '🔔 Rappel administrateur';
+      case 'loan_validated': return '✅ Emprunt validé';
+      case 'loan_created': return '📖 Emprunt créé';
+      case 'loan_overdue': return '⚠️ Emprunt en retard';
+      case 'loan_renewed': return '🔄 Emprunt prolongé';
       default: return '📢 Notification';
     }
   };
 
   const getNotificationColor = (type: string, isRead: boolean) => {
     if (isRead) return '#f5f5f5';
-    
     switch (type) {
-      case 'overdue_notice': return '#ffebee';
-      case 'loan_reminder': return '#fff3e0';
-      case 'reservation_ready': return '#e8f5e8';
-      case 'book_returned': return '#e3f2fd';
-      default: return '#f8eadd';
+      case 'overdue_notice':
+      case 'loan_overdue':
+        return '#ffebee';
+      case 'loan_reminder':
+      case 'admin_reminder':
+        return '#fff3e0';
+      case 'reservation_ready':
+      case 'loan_validated':
+      case 'loan_created':
+        return '#e8f5e8';
+      case 'book_returned':
+      case 'loan_renewed':
+        return '#e3f2fd';
+      case 'reservation_cancelled':
+      case 'reservation_refused':
+        return '#ffe0e0';
+      default:
+        return '#f8eadd';
     }
   };
 
@@ -163,7 +185,7 @@ export default function NotificationsPage() {
           ) : notifications.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '20px' }}>
               <p>Aucune notification pour le moment.</p>
-              <p>Vous serez notifié des événements importants concernant vos emprunts.</p>
+              <p>Vous serez notifié des événements.</p>
             </div>
           ) : (
             <div>
