@@ -5,7 +5,20 @@
 
 import { UserProfile } from '../types/user';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+// Fonction utilitaire pour construire les URLs des images
+export const getImageUrl = (imagePath: string | null | undefined): string | null => {
+  if (!imagePath) return null;
+  
+  // Si l'URL est déjà absolue, la retourner telle quelle
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
+  // Construire l'URL absolue
+  return `${API_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+};
 
 // Types pour les réponses API
 interface ApiResponse<T> {
@@ -168,6 +181,29 @@ export const authService = {
 
   async logout(): Promise<ApiResponse<void>> {
     return authenticatedFetch('/auth/logout', { method: 'POST' });
+  },
+
+  async changePassword(data: { currentPassword: string; newPassword: string }): Promise<ApiResponse<void>> {
+    return authenticatedFetch('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+
+  async deleteAccount(): Promise<ApiResponse<void>> {
+    return authenticatedFetch('/auth/delete-account', {
+      method: 'DELETE'
+    });
+  },
+
+  async uploadProfileImage(file: File): Promise<ApiResponse<{ url: string }>> {
+    const formData = new FormData();
+    formData.append('profile_image', file);
+    
+    return authenticatedFetch('/auth/profile-image', {
+      method: 'POST',
+      body: formData // Ne pas définir Content-Type, le navigateur le fera automatiquement avec boundary
+    });
   },
 };
 

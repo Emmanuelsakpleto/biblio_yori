@@ -120,7 +120,7 @@ const Header = () => {
 
                   {/* Menu profil */}
                   <div className="absolute right-0 mt-2 w-48 bg-white/95 backdrop-blur-xl rounded-lg shadow-xl border border-slate-200/60 overflow-hidden opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto">
-                    <Link href="/dashboard/profile" className="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/70 transition-colors">
+                    <Link href="/profile" className="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/70 transition-colors">
                       Mon profil
                     </Link>
                     <Link href="/dashboard" className="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/70 transition-colors">
