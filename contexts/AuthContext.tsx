@@ -35,25 +35,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const storedUser = localStorage.getItem('user');
         const storedToken = localStorage.getItem('token');
         
-        console.log('InitAuth - User dans localStorage:', storedUser);
-        console.log('InitAuth - Token dans localStorage:', storedToken ? 'présent' : 'absent');
-        
         if (storedUser && storedToken) {
-          console.log('Utilisateur trouvé dans localStorage:', JSON.parse(storedUser));
-          setUser(JSON.parse(storedUser));
+          // Corriger la structure des données - extraire juste l'objet user
+          const parsedData = JSON.parse(storedUser);
+          const userData = parsedData.user || parsedData; // Support ancienne et nouvelle structure
+          
+          setUser(userData);
           setToken(storedToken);
           
           // Vérifier si le token est toujours valide
           try {
-            console.log('Vérification du token...');
             const profileResponse = await authService.profile();
             if (profileResponse.success && profileResponse.data) {
-              console.log('Token valide, utilisateur:', profileResponse.data);
-              setUser(profileResponse.data);
-              localStorage.setItem('user', JSON.stringify(profileResponse.data));
+              // Le backend retourne { user, stats }, nous ne gardons que l'objet user
+              const userData = (profileResponse.data as any).user || profileResponse.data;
+              
+              // Mettre à jour avec les données fraîches du serveur (juste l'utilisateur)
+              setUser(userData);
+              localStorage.setItem('user', JSON.stringify(userData));
             }
           } catch (error) {
-            console.log('Token invalide, nettoyage du localStorage:', error);
             // Token invalide, nettoyer
             localStorage.removeItem('user');
             localStorage.removeItem('token');
@@ -61,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setToken(null);
           }
         } else {
-          console.log('Aucun utilisateur trouvé dans localStorage');
+          // Aucun utilisateur trouvé dans localStorage
         }
       } catch (error) {
         console.error('Erreur lors de l\'initialisation de l\'authentification:', error);
@@ -141,8 +142,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await authService.profile();
       if (response.success && response.data) {
-        setUser(response.data);
-        localStorage.setItem('user', JSON.stringify(response.data));
+        // Le backend retourne { user, stats }, nous ne gardons que l'objet user
+        const userData = (response.data as any).user || response.data;
+        
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
       }
     } catch (error) {
       console.error('Erreur lors du rafraîchissement du profil:', error);
