@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
-  Search,
   GraduationCap,
   Quote,
   ArrowRight,
@@ -121,7 +120,7 @@ const Home = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20"
+            className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20 max-w-4xl mx-auto"
           >
             <Link href="/books" className="block">
               <div className="glass-effect-strong rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/20 relative overflow-hidden group">
@@ -151,20 +150,6 @@ const Home = () => {
                     ? 'Gérez les utilisateurs, les livres et surveillez les statistiques' 
                     : 'Accédez à vos emprunts, réservations et profil'}
                 </p>
-                <div className="flex items-center text-[var(--color-accent-primary)] font-semibold group-hover:translate-x-2 transition-transform duration-300">
-                  Explorer <ArrowRight className="ml-2 w-5 h-5" />
-                </div>
-              </div>
-            </Link>
-            
-            <Link href="/search" className="block">
-              <div className="glass-effect-strong rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/20 relative overflow-hidden group">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--color-accent-tertiary)] to-[var(--color-hover-tertiary)]"></div>
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-accent-tertiary)] to-[var(--color-hover-tertiary)] flex items-center justify-center mb-6 shadow-lg">
-                  <Search className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">Recherche</h3>
-                <p className="text-[var(--color-text-secondary)] mb-6">Trouvez rapidement les ressources dont vous avez besoin</p>
                 <div className="flex items-center text-[var(--color-accent-primary)] font-semibold group-hover:translate-x-2 transition-transform duration-300">
                   Explorer <ArrowRight className="ml-2 w-5 h-5" />
                 </div>

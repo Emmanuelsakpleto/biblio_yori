@@ -263,8 +263,28 @@ export const bookService = {
     return authenticatedFetch(`/books/${id}`);
   },
 
-  async searchBooks(query: string): Promise<ApiResponse<{ books: Book[] }>> {
-    return authenticatedFetch(`/books/search?q=${encodeURIComponent(query)}`);
+  async searchBooks(params: {
+    search?: string;
+    category?: string;
+    author?: string;
+    available_only?: boolean;
+    sort_by?: string;
+    sort_order?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Promise<ApiResponse<{ books: Book[]; total: number }>> {
+    const searchParams = new URLSearchParams();
+    
+    if (params.search) searchParams.append('search', params.search);
+    if (params.category) searchParams.append('category', params.category);
+    if (params.author) searchParams.append('author', params.author);
+    if (params.available_only) searchParams.append('available_only', 'true');
+    if (params.sort_by) searchParams.append('sort_by', params.sort_by);
+    if (params.sort_order) searchParams.append('sort_order', params.sort_order);
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+
+    return authenticatedFetch(`/books/search?${searchParams.toString()}`);
   },
 
   async getCategories(): Promise<ApiResponse<string[]>> {
