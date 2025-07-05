@@ -1,32 +1,15 @@
 "use client";
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useConfig } from '../../../contexts/ConfigContext';
 import ProtectedRoute from '../../../components/ProtectedRoute';
-import { reviewService, utils, type Review } from '../../../lib/api';
-import ReviewsTable from './ReviewsTable';
+import { reviewService, type Review } from '../../../lib/api';
 import Link from 'next/link';
-
-// Types pour les filtres
-interface ReviewFilters {
-  status: 'all' | 'approved' | 'pending';
-  rating: number | null;
-  search: string;
-}
+import { Star, Plus, Edit, Trash2, Eye } from 'lucide-react';
 
 export default function ReviewsPage() {
   const { user } = useAuth();
-  const config = useConfig();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<ReviewFilters>({
-    status: 'all',
-    rating: null,
-    search: ''
-  });
-  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
-  const [showApprovalSuccess, setShowApprovalSuccess] = useState(false);
 
   useEffect(() => {
     fetchReviews();
@@ -35,19 +18,222 @@ export default function ReviewsPage() {
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      setError(null);
       const response = await reviewService.getReviews();
       if (response.success && Array.isArray(response.data)) {
         // Si admin, afficher tous les avis, sinon seulement ceux de l'utilisateur
         if (user?.role === 'admin') {
           setReviews(response.data);
         } else {
-          const userReviews = response.data.filter(review => review.user_id === user?.id);
+          const userReviews = response.data.filter((review: any) => review.user_id === user?.id);
           setReviews(userReviews);
         }
       } else {
         setReviews([]);
-        setError(response?.message || 'Erreur lors du chargement des avis');
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des avis:', error);
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (reviewId: number) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet avis ?')) {
+      return;
+    }
+    
+    try {
+      const response = await reviewService.deleteReview(reviewId);
+      if (response.success) {
+        setReviews(prev => prev.filter(r => r.id !== reviewId));
+      } else {
+        alert(response.message || 'Erreur lors de la suppression');
+      }
+    } catch (error) {
+      alert('Erreur lors de la suppression');
+    }
+  };
+
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+      />
+    ));
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR');
+  };
+
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Chargement des avis...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  const isAdmin = user?.role === 'admin';
+  const approvedReviews = reviews.filter(r => r.is_approved);
+  const pendingReviews = reviews.filter(r => !r.is_approved);
+
+  return (
+    <ProtectedRoute>
+      <div className="space-y-6">
+        {/* En-tête */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isAdmin ? 'Gestion des Avis' : 'Mes Avis'}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {isAdmin 
+                ? 'Modération et gestion des avis de livres' 
+                : 'Vos avis sur les livres que vous avez lus'
+              }
+            </p>
+          </div>
+          
+          {!isAdmin && (
+            <Link href="/dashboard/reviews/add">
+              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700">
+                <Plus className="w-4 h-4" />
+                Ajouter un avis
+              </button>
+            </Link>
+          )}
+        </div>
+
+        {/* Statistiques */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Avis</p>
+                <p className="text-2xl font-bold text-gray-900">{reviews.length}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Eye className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Approuvés</p>
+                <p className="text-2xl font-bold text-green-600">{approvedReviews.length}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <Star className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">En attente</p>
+                <p className="text-2xl font-bold text-orange-600">{pendingReviews.length}</p>
+              </div>
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Edit className="w-6 h-6 text-orange-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Liste des avis */}
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6 border-b">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {isAdmin ? 'Tous les avis' : 'Vos avis'}
+            </h2>
+          </div>
+
+          {reviews.length === 0 ? (
+            <div className="p-12 text-center">
+              <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {isAdmin ? 'Aucun avis pour le moment' : 'Vous n\'avez pas encore d\'avis'}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {isAdmin 
+                  ? 'Les avis des utilisateurs apparaîtront ici'
+                  : 'Commencez par lire un livre et partagez votre avis'
+                }
+              </p>
+              {!isAdmin && (
+                <Link href="/dashboard/reviews/add">
+                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Écrire mon premier avis
+                  </button>
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {reviews.map((review) => (
+                <div key={review.id} className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-medium text-gray-900">
+                          {review.book?.title || 'Livre inconnu'}
+                        </h3>
+                        <div className="flex items-center gap-1">
+                          {renderStars(review.rating)}
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          review.is_approved 
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {review.is_approved ? 'Approuvé' : 'En attente'}
+                        </span>
+                      </div>
+                      
+                      {review.comment && (
+                        <p className="text-gray-600 mb-2">{review.comment}</p>
+                      )}
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span>Publié le {formatDate(review.created_at)}</span>
+                        {isAdmin && (
+                          <span>Par {review.user?.first_name} {review.user?.last_name}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-4">
+                      {!isAdmin && (
+                        <button
+                          onClick={() => handleDelete(review.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </ProtectedRoute>
+  );
+}
       }
     } catch (err) {
       setError('Erreur lors du chargement des avis');
