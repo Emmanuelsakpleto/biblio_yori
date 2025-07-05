@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  // Configuration pour Docker (standalone)
-  output: 'standalone',
+  // Ne pas utiliser standalone sur Vercel
+  // output: 'standalone',
   
   images: {
     domains: [
@@ -11,8 +11,8 @@ const nextConfig = {
       'plus.unsplash.com',
       'localhost'
     ],
-    // Configuration pour Docker
-    unoptimized: process.env.NODE_ENV === 'production',
+    // Optimiser les images sauf pour Docker local
+    unoptimized: process.env.NODE_ENV === 'development' && process.env.DOCKER_ENV === 'true',
   },
   
   env: {
