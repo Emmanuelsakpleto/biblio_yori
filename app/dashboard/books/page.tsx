@@ -9,8 +9,6 @@ import {
   Trash2, 
   Search, 
   Filter,
-  Upload,
-  Download,
   Eye,
   Users,
   AlertCircle,
@@ -187,20 +185,6 @@ const BooksManagementPage = () => {
                     <option key={category} value={category}>{category}</option>
                   ))}
                 </select>
-              </div>
-
-              {/* Actions en lot */}
-              <div className="flex gap-2">
-                <button className="flex-1 px-4 py-3 rounded-xl bg-green-600 text-white 
-                                 hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Importer
-                </button>
-                <button className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white 
-                                 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                  <Download className="w-4 h-4" />
-                  Exporter
-                </button>
               </div>
             </div>
           </div>

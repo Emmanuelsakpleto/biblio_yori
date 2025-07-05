@@ -121,11 +121,6 @@ const Sidebar = () => {
       title: "Notifications",
       icon: <Bell className="w-5 h-5" />,
       href: "/dashboard/notifications"
-    },
-    {
-      title: "Statistiques",
-      icon: <BarChart3 className="w-5 h-5" />,
-      href: "/dashboard/stats"
     }
   ];
 
