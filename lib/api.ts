@@ -117,6 +117,22 @@ interface Review {
   book?: Book;
 }
 
+// Add interface for GetMyNotificationsOptions
+interface GetMyNotificationsOptions {
+  limit?: number;
+  offset?: number;
+  unread_only?: boolean;
+  type?: string;
+  priority?: string;
+}
+
+// Add interface for paginated notifications response
+interface PaginatedNotificationsResponse {
+  notifications: Notification[];
+  total: number;
+  hasMore: boolean;
+}
+
 // Utilitaire pour les requêtes authentifiées
 const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');
@@ -239,7 +255,8 @@ export const bookService = {
     if (params?.category) queryParams.append('category', params.category);
     if (params?.author) queryParams.append('author', params.author);
 
-    return authenticatedFetch(`/books?${queryParams.toString()}`);
+    const queryString = queryParams.toString();
+    return authenticatedFetch(`/books${queryString ? `?${queryString}` : ''}`);
   },
 
   async getBook(id: number): Promise<ApiResponse<Book>> {
@@ -472,7 +489,8 @@ export const loanService = {
     if (params?.user_id) query.append('user_id', params.user_id.toString());
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('limit', params.limit.toString());
-    return authenticatedFetch(`/loans?${query.toString()}`);
+    const queryString = query.toString();
+    return authenticatedFetch(`/loans${queryString ? `?${queryString}` : ''}`);
   },
 
   async createLoan(bookId: number): Promise<ApiResponse<Loan>> {
@@ -531,19 +549,28 @@ export const loanService = {
 
 // Services des notifications
 export const notificationService = {
-  async getMyNotifications(): Promise<ApiResponse<Notification[]>> {
-    return authenticatedFetch('/notifications/me');
+  async getMyNotifications(options?: GetMyNotificationsOptions): Promise<ApiResponse<PaginatedNotificationsResponse>> {
+    const queryParams = new URLSearchParams();
+    if (options?.limit) queryParams.append('limit', options.limit.toString());
+    if (options?.offset) queryParams.append('offset', options.offset.toString());
+    if (options?.unread_only !== undefined) queryParams.append('unread_only', options.unread_only.toString());
+    if (options?.type) queryParams.append('type', options.type);
+    if (options?.priority) queryParams.append('priority', options.priority);
+
+    const queryString = queryParams.toString();
+    return authenticatedFetch(`/notifications/me${queryString ? `?${queryString}` : ''}`);
   },
 
-  async markAsRead(notificationId: number): Promise<ApiResponse<void>> {
+  async markAsRead(notificationId: number): Promise<ApiResponse<Notification>> {
     return authenticatedFetch(`/notifications/${notificationId}/read`, {
       method: 'PATCH'
     });
   },
 
-  async markAllAsRead(): Promise<ApiResponse<void>> {
-    return authenticatedFetch('/notifications/mark-all-read', {
-      method: 'PUT'
+  // Correct the path and method for markAllAsRead
+  async markAllAsRead(): Promise<ApiResponse<{ updated_count: number }>> {
+    return authenticatedFetch('/notifications/me/mark-all-read', {
+      method: 'PATCH'
     });
   },
 
@@ -695,5 +722,7 @@ export type {
   Notification, 
   Review, 
   ApiResponse,
-  LoginResponse 
+  LoginResponse,
+  GetMyNotificationsOptions, // Export the new type
+  PaginatedNotificationsResponse // Export the new type
 };

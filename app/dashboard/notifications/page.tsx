@@ -3,12 +3,16 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useConfig } from '../../../contexts/ConfigContext';
 import ProtectedRoute from '../../../components/ProtectedRoute';
-import { notificationService, utils, type Notification } from '../../../lib/api';
+import { notificationService, utils, type Notification, type PaginatedNotificationsResponse } from '../../../lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Bell, CheckCircle, Clock, AlertTriangle, BookOpen, Calendar, FileText, Users, RefreshCcw, Settings } from 'lucide-react';
 
 export default function NotificationsPage() {
   const { user } = useAuth();
   const config = useConfig();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  // Update state type to handle paginated response
+  const [notificationsData, setNotificationsData] = useState<PaginatedNotificationsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
@@ -19,6 +23,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     setPage(1);
     setHasMore(true);
+    // Pass reset = true to clear previous notifications when filter changes
     fetchNotifications(1, true);
     // eslint-disable-next-line
   }, [filter]);
@@ -27,7 +32,6 @@ export default function NotificationsPage() {
     try {
       setLoading(true);
       setError(null);
-      // Ajout des options de filtrage côté backend si besoin
       const response = await notificationService.getMyNotifications({
         limit: PAGE_SIZE,
         offset: (pageToFetch - 1) * PAGE_SIZE,
@@ -36,17 +40,26 @@ export default function NotificationsPage() {
         priority: ''
       });
       if (response.success && response.data) {
-        const data = response.data as Notification[];
-        if (reset) setNotifications(data);
-        else setNotifications(prev => [...prev, ...data]);
-        setHasMore((data.length || 0) === PAGE_SIZE);
+        const data = response.data;
+        if (reset) {
+          setNotificationsData(data);
+        } else {
+          // Append new notifications to the existing list
+          setNotificationsData(prev => ({
+            ...(prev as PaginatedNotificationsResponse),
+            notifications: [...(prev?.notifications || []), ...data.notifications],
+            total: data.total,
+            hasMore: data.hasMore,
+          }));
+        }
+        setHasMore(data.hasMore);
       } else {
-        if (reset) setNotifications([]);
+        if (reset) setNotificationsData(null);
         setHasMore(false);
         setError(response.message || 'Erreur lors du chargement des notifications');
       }
-    } catch (err) {
-      setError('Erreur lors du chargement des notifications');
+    } catch (err: any) {
+      setError('Erreur lors du chargement des notifications: ' + err.message);
       setHasMore(false);
     } finally {
       setLoading(false);
@@ -54,18 +67,26 @@ export default function NotificationsPage() {
   };
 
   const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchNotifications(nextPage);
+    if (!loading && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchNotifications(nextPage);
+    }
   };
 
   const handleMarkAsRead = async (notificationId: number) => {
     try {
       const response = await notificationService.markAsRead(notificationId);
       if (response.success) {
-        setNotifications(prev => 
-          prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
-        );
+        // Update the specific notification in the state
+        setNotificationsData(prev => {
+          if (!prev) return null;
+          const updatedNotifications = prev.notifications.map(n => n.id === notificationId ? { ...n, is_read: true } : n);
+          return {
+            ...prev,
+            notifications: updatedNotifications
+          };
+        });
       }
     } catch (error) {
       console.error('Erreur lors du marquage comme lu:', error);
@@ -76,7 +97,19 @@ export default function NotificationsPage() {
     try {
       const response = await notificationService.markAllAsRead();
       if (response.success) {
-        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        // Mark all currently loaded notifications as read
+        setNotificationsData(prev => {
+          if (!prev) return null;
+          const updatedNotifications = prev.notifications.map(n => ({ ...n, is_read: true }));
+          return {
+            ...prev,
+            notifications: updatedNotifications
+          };
+        });
+        // If the filter is 'unread', refetch to show no notifications
+        if (filter === 'unread') {
+            fetchNotifications(1, true);
+        }
       }
     } catch (error) {
       console.error('Erreur lors du marquage global:', error);
@@ -100,6 +133,29 @@ export default function NotificationsPage() {
       case 'loan_created': return '📖 Emprunt créé';
       case 'loan_overdue': return '⚠️ Emprunt en retard';
       case 'loan_renewed': return '🔄 Emprunt prolongé';
+      case 'book_available': return '📚 Livre disponible';
+      case 'new_book': return '✨ Nouveau livre';
+      case 'book_reservation': return '📥 Réservation';
+      case 'book_deleted': return '🗑️ Livre supprimé';
+      case 'book_reservation_admin': return '📥 Réservation (Admin)';
+      case 'book_deleted_admin': return '🗑️ Livre supprimé (Admin)';
+      case 'new_book_admin': return '✨ Nouveau livre (Admin)';
+      case 'book_admin_update': return '🔄 Livre (Admin)';
+      case 'loan_requested': return '📥 Demande emprunt';
+      case 'loan_validated_admin': return '✅ Emprunt validé (Admin)';
+      case 'loan_refused': return '🚫 Emprunt refusé';
+      case 'loan_refused_admin': return '🚫 Emprunt refusé (Admin)';
+      case 'loan_returned_admin': return '↩️ Livre retourné (Admin)';
+      case 'loan_renewal_requested': return '🔄 Demande renouvellement';
+      case 'loan_renewed_admin': return '🔄 Emprunt prolongé (Admin)';
+      case 'loan_overdue_admin': return '⚠️ Emprunt en retard (Admin)';
+      case 'loan_admin_update': return '🔄 Emprunt (Admin)';
+      case 'welcome': return '👋 Bienvenue';
+      case 'password_changed': return '🔐 Mot de passe';
+      case 'email_verified': return '📧 Email vérifié';
+      case 'profile_updated': return '👤 Profil mis à jour';
+      case 'maintenance': return '🛠️ Maintenance';
+      case 'custom': return '💬 Message';
       default: return '📢 Notification';
     }
   };
@@ -109,34 +165,90 @@ export default function NotificationsPage() {
     switch (type) {
       case 'overdue_notice':
       case 'loan_overdue':
-        return '#ffebee';
+      case 'loan_overdue_admin':
+        return '#ffebee'; // Reddish
       case 'loan_reminder':
       case 'admin_reminder':
-        return '#fff3e0';
+        return '#fff3e0'; // Orangish
       case 'reservation_ready':
       case 'loan_validated':
       case 'loan_created':
-        return '#e8f5e8';
+      case 'loan_validated_admin':
+        return '#e8f5e8'; // Greenish
       case 'book_returned':
       case 'loan_renewed':
-        return '#e3f2fd';
+      case 'book_returned_admin':
+      case 'loan_renewed_admin':
+        return '#e3f2fd'; // Bluish
       case 'reservation_cancelled':
       case 'reservation_refused':
-        return '#ffe0e0';
+      case 'loan_refused':
+      case 'loan_refused_admin':
+      case 'book_deleted':
+      case 'book_deleted_admin':
+        return '#ffe0e0'; // Light Reddish
+      case 'account_created':
+      case 'password_reset':
+      case 'email_verified':
+      case 'profile_updated':
+      case 'welcome':
+        return '#ede7f6'; // Purplish
+      case 'new_book':
+      case 'new_book_admin':
+        return '#e0f2f7'; // Cyanish
+      case 'book_reservation':
+      case 'book_reservation_admin':
+      case 'loan_requested':
+        return '#fff9c4'; // Yellowish
       default:
-        return '#f8eadd';
+        return '#f8eadd'; // Default light orange/brown
     }
   };
 
-  // Correction robustesse : notifications peut être un objet (backend paginé)
-  const notificationList = Array.isArray(notifications)
-    ? notifications
-    : (notifications && Array.isArray(notifications.notifications))
-      ? notifications.notifications
-      : [];
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'loan_reminder': return <Clock className="w-5 h-5 text-orange-500" />;
+      case 'overdue_notice':
+      case 'loan_overdue':
+      case 'loan_overdue_admin': return <AlertTriangle className="w-5 h-5 text-red-500" />;
+      case 'reservation_ready':
+      case 'loan_validated':
+      case 'loan_created':
+      case 'loan_validated_admin': return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'book_returned':
+      case 'loan_renewed':
+      case 'book_returned_admin':
+      case 'loan_renewed_admin': return <BookOpen className="w-5 h-5 text-blue-500" />;
+      case 'account_created':
+      case 'password_reset':
+      case 'email_verified':
+      case 'profile_updated':
+      case 'welcome': return <Users className="w-5 h-5 text-purple-500" />;
+      case 'reservation_cancelled':
+      case 'reservation_refused':
+      case 'loan_refused':
+      case 'loan_refused_admin':
+      case 'book_deleted':
+      case 'book_deleted_admin': return <AlertTriangle className="w-5 h-5 text-red-500" />;
+      case 'admin_reminder': return <Bell className="w-5 h-5 text-yellow-500" />;
+      case 'new_book':
+      case 'new_book_admin': return <BookOpen className="w-5 h-5 text-cyan-500" />;
+      case 'book_reservation':
+      case 'book_reservation_admin':
+      case 'loan_requested': return <Calendar className="w-5 h-5 text-yellow-700" />;
+      case 'maintenance': return <Settings className="w-5 h-5 text-gray-700" />;
+      case 'custom': return <Bell className="w-5 h-5 text-indigo-500" />;
+      default: return <Bell className="w-5 h-5 text-gray-500" />;
+    }
+  };
 
+  // Access notifications list from notificationsData
+  const notificationList = notificationsData?.notifications || [];
+
+  // Calculate unread count from the current list
   const unreadCount = notificationList.filter(n => !n.is_read).length;
 
+  // Filter the list based on the selected filter
   const filteredNotifications = notificationList.filter(n => {
     if (filter === 'unread') return !n.is_read;
     if (filter === 'read') return n.is_read;
@@ -145,192 +257,124 @@ export default function NotificationsPage() {
 
   return (
     <ProtectedRoute>
-      <main className="bookContainer" style={{ maxWidth: 700, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px #0001', padding: 32 }}>
-        <aside>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 className="center" style={{ margin: 0, fontWeight: 700, fontSize: 28, letterSpacing: 1 }}>Notifications administrateur</h2>
-            {unreadCount > 0 && (
-              <span style={{
-                background: 'linear-gradient(90deg,#ff4444,#ff8800)',
-                color: 'white',
-                borderRadius: '50%',
-                width: '28px',
-                height: '28px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 8px #ff444444'
-              }}>
-                {unreadCount}
-              </span>
-            )}
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-[var(--color-bg-main)] via-[var(--color-bg-alt)] to-[var(--color-bg-main)] py-8 px-4">
+        <div className="max-w-3xl mx-auto">
+          <Card className="bg-white shadow-lg rounded-lg p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-2xl font-bold text-gray-800">Notifications</CardTitle>
+              {/* Display unread count badge */}
+              {unreadCount > 0 && (
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-red-500 text-white text-xs font-bold shadow-md">
+                  {unreadCount}
+                </span>
+              )}
+            </CardHeader>
 
-          {/* Filtres d'affichage */}
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', justifyContent: 'center' }}>
-            <button
-              className={filter === 'all' ? 'saveButton' : ''}
-              style={{ background: filter === 'all' ? '#4488ff' : '#eee', color: filter === 'all' ? 'white' : '#333', border: 'none', padding: '8px 18px', borderRadius: '8px', fontWeight: 600, fontSize: 15 }}
-              onClick={() => setFilter('all')}
-            >
-              Toutes
-            </button>
-            <button
-              className={filter === 'unread' ? 'saveButton' : ''}
-              style={{ background: filter === 'unread' ? '#44aa44' : '#eee', color: filter === 'unread' ? 'white' : '#333', border: 'none', padding: '8px 18px', borderRadius: '8px', fontWeight: 600, fontSize: 15 }}
-              onClick={() => setFilter('unread')}
-            >
-              Non lues
-            </button>
-            <button
-              className={filter === 'read' ? 'saveButton' : ''}
-              style={{ background: filter === 'read' ? '#aaa' : '#eee', color: filter === 'read' ? 'white' : '#333', border: 'none', padding: '8px 18px', borderRadius: '8px', fontWeight: 600, fontSize: 15 }}
-              onClick={() => setFilter('read')}
-            >
-              Lues
-            </button>
-          </div>
-          
-          <p className="small">
-            {unreadCount > 0 
-              ? `Vous avez ${unreadCount} notification(s) non lue(s)`
-              : 'Toutes vos notifications sont à jour'
-            }
-          </p>
-          
-          {notifications.length > 0 && unreadCount > 0 && (
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <button
-                onClick={handleMarkAllAsRead}
-                className="saveButton"
-                style={{
-                  background: '#4488ff',
-                  color: 'white',
-                  border: 'none'
-                }}
-              >
-                Tout marquer comme lu
-              </button>
-            </div>
-          )}
-          
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <div>Chargement des notifications...</div>
-            </div>
-          ) : error ? (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#ff4444' }}>
-              {error}
-              <button 
-                onClick={fetchNotifications}
-                className="saveButton"
-                style={{ display: 'block', margin: '10px auto' }}
-              >
-                Réessayer
-              </button>
-            </div>
-          ) : notifications.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <p>Aucune notification pour le moment.</p>
-              <p>Vous serez notifié des événements.</p>
-            </div>
-          ) : (
-            <div>
-              {filteredNotifications.map(notification => (
-                <div 
-                  key={notification.id} 
-                  style={{ 
-                    marginBottom: '15px',
-                    padding: '15px',
-                    borderRadius: '10px',
-                    background: getNotificationColor(notification.type, notification.is_read),
-                    border: notification.is_read ? '1px solid #ddd' : '2px solid #4488ff',
-                    position: 'relative'
-                  }}
+            <CardContent className="p-0">
+              {/* Filtres d'affichage */}
+              <div className="flex gap-3 mb-6 justify-center">
+                <Button
+                  variant={filter === 'all' ? 'default' : 'outline'}
+                  onClick={() => setFilter('all')}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
-                        <span style={{ marginRight: '8px' }}>
-                          {getNotificationTypeText(notification.type)}
-                        </span>
-                        {!notification.is_read && (
-                          <span style={{
-                            background: '#ff4444',
-                            color: 'white',
-                            fontSize: '10px',
-                            padding: '2px 6px',
-                            borderRadius: '10px'
-                          }}>
-                            NOUVEAU
-                          </span>
-                        )}
-                      </div>
-                      
-                      <h4 style={{ 
-                        margin: '0 0 8px 0', 
-                        fontWeight: notification.is_read ? 'normal' : 'bold' 
-                      }}>
-                        {notification.title}
-                      </h4>
-                      
-                      <p style={{ 
-                        margin: '0 0 8px 0', 
-                        lineHeight: '1.5',
-                        opacity: notification.is_read ? 0.8 : 1 
-                      }}>
-                        {notification.message}
-                      </p>
-                      
-                      <div style={{ fontSize: '12px', color: '#666' }}>
-                        {utils.formatDate(notification.created_at)}
-                        {notification.scheduled_for && (
-                          <span style={{ marginLeft: '10px' }}>
-                            • Programmé pour : {utils.formatDate(notification.scheduled_for)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginLeft: '10px' }}>
-                      {!notification.is_read && (
-                        <button
-                          onClick={() => handleMarkAsRead(notification.id)}
-                          className="saveButton"
-                          style={{
-                            background: '#44aa44',
-                            color: 'white',
-                            border: 'none',
-                            padding: '4px 8px',
-                            fontSize: '10px'
-                          }}
-                        >
-                          Marquer comme lu
-                        </button>
-                      )}
-                      
-                      {/* Suppression désactivée : bouton supprimé */}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {hasMore && !loading && (
-                <div style={{ textAlign: 'center', margin: '24px 0' }}>
-                  <button
-                    onClick={handleLoadMore}
-                    className="saveButton"
-                    style={{ background: '#4488ff', color: 'white', border: 'none', padding: '10px 32px', borderRadius: 8, fontWeight: 600, fontSize: 16 }}
-                  >
-                    Charger plus
-                  </button>
+                  Toutes
+                </Button>
+                <Button
+                  variant={filter === 'unread' ? 'default' : 'outline'}
+                  onClick={() => setFilter('unread')}
+                >
+                  Non lues ({unreadCount})
+                </Button>
+                <Button
+                  variant={filter === 'read' ? 'default' : 'outline'}
+                  onClick={() => setFilter('read')}
+                >
+                  Lues
+                </Button>
+              </div>
+
+              {/* Mark all as read button */}
+              {notificationList.length > 0 && unreadCount > 0 && filter !== 'read' && (
+                <div className="text-center mb-6">
+                  <Button onClick={handleMarkAllAsRead} variant="outline">
+                    Tout marquer comme lu
+                  </Button>
                 </div>
               )}
-            </div>
-          )}
-        </aside>
-      </main>
+
+              {/* Loading, Error, Empty, or Notifications List */}
+              {loading && notificationList.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCcw className="w-8 h-8 animate-spin text-blue-500" />
+                  <span className="ml-3 text-gray-600">Chargement des notifications...</span>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8 text-red-500">
+                  <p>{error}</p>
+                  <Button onClick={() => fetchNotifications(1, true)} className="mt-4" variant="outline">
+                    Réessayer
+                  </Button>
+                </div>
+              ) : filteredNotifications.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Bell className="w-12 h-12 mx-auto mb-4" />
+                  <p className="text-lg font-semibold">Aucune notification pour le moment.</p>
+                  <p className="text-sm">Vous serez notifié des événements importants.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredNotifications.map(notification => (
+                    <Card 
+                      key={notification.id} 
+                      className={`cursor-pointer transition-all duration-200 ${notification.is_read ? 'bg-gray-100 border-gray-200' : 'bg-white border-blue-500 shadow-md'}`}
+                      onClick={() => !notification.is_read && handleMarkAsRead(notification.id)}
+                    >
+                      <CardContent className="p-4 flex items-start space-x-4">
+                        <div className={`p-3 rounded-full ${notification.is_read ? 'bg-gray-200' : 'bg-blue-100'}`}>
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className={`text-base font-semibold ${notification.is_read ? 'text-gray-700 font-normal' : 'text-gray-900'}`}>
+                              {notification.title}
+                            </h4>
+                            {!notification.is_read && (
+                              <span className="text-xs font-medium text-white bg-red-500 px-2 py-0.5 rounded-full">
+                                Nouveau
+                              </span>
+                            )}
+                          </div>
+                          
+                          <p className={`text-sm mb-2 ${notification.is_read ? 'text-gray-600' : 'text-gray-800'}`}>
+                            {notification.message}
+                          </p>
+                          
+                          <div className="text-xs text-gray-500">
+                            {utils.formatDate(notification.created_at)}
+                            {notification.scheduled_for && (
+                              <span className="ml-3">
+                                • Programmé pour : {utils.formatDate(notification.scheduled_for)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {/* Load More Button */}
+                  {hasMore && !loading && (
+                    <div className="text-center mt-6">
+                      <Button onClick={handleLoadMore} variant="outline">
+                        Charger plus
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </ProtectedRoute>
   );
 }
