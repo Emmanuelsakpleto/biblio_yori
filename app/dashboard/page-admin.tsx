@@ -107,8 +107,8 @@ export default function DashboardPage() {
       // Notifications pour tous
       const notificationsResponse = await notificationService.getMyNotifications();
       if (notificationsResponse.success && notificationsResponse.data) {
-        const notifications = notificationsResponse.data;
-        const unreadNotifications = notifications.filter(n => !n.is_read);
+        const notifications = notificationsResponse.data.notifications || [];
+        const unreadNotifications = notifications.filter((n: any) => !n.is_read);
         
         setStats(prev => ({
           ...prev,

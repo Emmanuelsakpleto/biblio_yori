@@ -14,7 +14,6 @@ import {
   FileText,
   Plus,
   LogOut,
-  User,
   Menu,
   X,
   ChevronDown,
@@ -43,8 +42,13 @@ const Sidebar = () => {
   // Menu pour les étudiants
   const studentMenuItems: MenuItem[] = [
     {
-      title: "Tableau de bord",
+      title: "Retour à l'accueil",
       icon: <Home className="w-5 h-5" />,
+      href: "/"
+    },
+    {
+      title: "Tableau de bord",
+      icon: <BarChart3 className="w-5 h-5" />,
       href: "/dashboard"
     },
     {
@@ -71,6 +75,11 @@ const Sidebar = () => {
 
   // Menu pour les administrateurs
   const adminMenuItems: MenuItem[] = [
+    {
+      title: "Retour à l'accueil",
+      icon: <Home className="w-5 h-5" />,
+      href: "/"
+    },
     {
       title: "Tableau de bord",
       icon: <BarChart3 className="w-5 h-5" />,
@@ -269,22 +278,6 @@ const Sidebar = () => {
 
       {/* Footer actions */}
       <div className="p-6 border-t border-gray-200 space-y-2">
-        <button
-          onClick={() => handleNavigation('/profile')}
-          className="w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors"
-        >
-          <User className="w-5 h-5" />
-          <span>Mon profil</span>
-        </button>
-        
-        <button
-          onClick={() => handleNavigation('/settings')}
-          className="w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors"
-        >
-          <Settings className="w-5 h-5" />
-          <span>Paramètres</span>
-        </button>
-        
         <button
           onClick={handleLogout}
           className="w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"

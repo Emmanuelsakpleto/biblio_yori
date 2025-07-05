@@ -409,6 +409,63 @@ export default function ReviewsPage() {
               )}
             </>
           ) : (
+      const response = await reviewService.deleteReview(reviewId);
+      if (response.success) {
+        setReviews(prev => prev.filter(r => r.id !== reviewId));
+      } else {
+        alert(response.message || 'Erreur lors de la suppression');
+      }
+    } catch (error) {
+      alert('Erreur lors de la suppression');
+    }
+  };
+
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <span key={i} style={{ 
+        color: i < rating ? '#ffd700' : '#ddd',
+        fontSize: '16px'
+      }}>
+        ★
+      </span>
+    ));
+  };
+
+  const getStatusColor = (isApproved: boolean) => {
+    return isApproved ? '#44aa44' : '#ff8800';
+  };
+
+  const getStatusText = (isApproved: boolean) => {
+    return isApproved ? '✅ Approuvé' : '⏳ En attente de modération';
+  };
+
+  return (
+    <ProtectedRoute>
+      <main className="bookContainer">
+        <aside>
+          {user?.role === 'admin' ? (
+            <>
+              <h2 className="center" style={{ margin: 0 }}>Modération des avis</h2>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <div>Chargement des avis...</div>
+                </div>
+              ) : error ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#ff4444' }}>
+                  {error}
+                  <button 
+                    onClick={fetchReviews}
+                    className="saveButton"
+                    style={{ display: 'block', margin: '10px auto' }}
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              ) : (
+                <ReviewsTable reviews={reviews} />
+              )}
+            </>
+          ) : (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2 className="center" style={{ margin: 0 }}>
@@ -812,6 +869,23 @@ export default function ReviewsPage() {
                         </div>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <Link
+                            href={`/dashboard/reviews/edit/${review.id}`}
+                            className="saveButton"
+                            style={{
+                              background: '#3b82f6',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 12px',
+                              fontSize: '12px',
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px'
+                            }}
+                          >
+                            ✏️ Modifier
+                          </Link>
                           <button
                             onClick={() => handleDelete(review.id)}
                             className="saveButton"

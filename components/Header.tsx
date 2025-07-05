@@ -40,7 +40,7 @@ const Header = () => {
       .then(res => {
         if (res.success && res.data) {
           // Typage strict : la réponse doit être un tableau de Notification
-          const data = res.data as Notification[];
+          const data = res.data.notifications;
           if (Array.isArray(data)) setNotifications(data);
           else setNotifications([]);
         } else {
