@@ -53,8 +53,17 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
           
           if (response.ok) {
             const data = await response.json();
-            setLikes(data.likes ?? 0);
-            setIsLiked(data.isLiked ?? false);
+            console.log('Réponse du serveur pour getLikes:', data);
+            
+            // Vérifier la structure de la réponse
+            if (data.success && data.data) {
+              setLikes(data.data.likes ?? 0);
+              setIsLiked(data.data.isLiked ?? false);
+            } else {
+              // Format direct sans wrapper
+              setLikes(data.likes ?? 0);
+              setIsLiked(data.isLiked ?? false);
+            }
           } else if (response.status === 401) {
             // Token expiré, nettoyer l'authentification
             console.log('Token expiré pour les likes');
@@ -121,8 +130,17 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
 
       if (response.ok) {
         const data = await response.json();
-        setLikes(data.likes ?? 0);
-        setIsLiked(data.isLiked ?? false);
+        console.log('Réponse du serveur pour like:', data);
+        
+        // Vérifier la structure de la réponse
+        if (data.success && data.data) {
+          setLikes(data.data.likes ?? 0);
+          setIsLiked(data.data.isLiked ?? false);
+        } else {
+          // Format direct sans wrapper
+          setLikes(data.likes ?? 0);
+          setIsLiked(data.isLiked ?? false);
+        }
       } else if (response.status === 401) {
         console.log('Token expiré pour le like');
         setLikeError('Authentification expirée');
