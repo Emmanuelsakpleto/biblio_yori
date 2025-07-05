@@ -35,6 +35,7 @@ export { viewport } from './viewport';
 
 import { AuthProvider } from '../contexts/AuthContext';
 import { ConfigProvider } from '../contexts/ConfigContext';
+import { LikesProvider } from '../contexts/LikesContext';
 
 export default function RootLayout({
   children,
@@ -61,7 +62,9 @@ export default function RootLayout({
         <div className="relative z-10 min-h-screen">
           <ConfigProvider>
             <AuthProvider>
-              {children}
+              <LikesProvider>
+                {children}
+              </LikesProvider>
             </AuthProvider>
           </ConfigProvider>
         </div>

@@ -49,15 +49,23 @@ export default function LoansPage() {
           }
         }
       } else {
-        response = await loanService.getMyLoans();
+        response = await loanService.getMyLoans({
+          status: statusFilter !== 'all' ? statusFilter : undefined,
+          include_history: true,
+          page: currentPage,
+          limit: 20
+        });
         if (response.success && response.data) {
-          // Typage strict : la réponse doit être un tableau de Loan
-          const data = response.data as Loan[];
-          if (Array.isArray(data)) {
-            setLoans(data);
-          } else {
-            setLoans([]);
+          // Vérifier si c'est un tableau direct ou un objet avec des loans
+          let loansArray: Loan[] = [];
+          if (Array.isArray(response.data)) {
+            loansArray = response.data;
+          } else if (response.data && typeof response.data === 'object' && 'loans' in response.data) {
+            loansArray = (response.data as any).loans || [];
+            setTotalPages((response.data as any).pagination?.totalPages || 1);
           }
+          
+          setLoans(loansArray);
         }
       }
       if (!response.success) setError(response.message || 'Erreur lors du chargement des emprunts');

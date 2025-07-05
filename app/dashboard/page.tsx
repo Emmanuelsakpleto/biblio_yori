@@ -41,6 +41,7 @@ export default function DashboardPage() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -58,11 +59,13 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Vérifier à nouveau le token avant les requêtes
       const token = localStorage.getItem('token');
       if (!token) {
         console.error('Aucun token trouvé pour charger le dashboard');
+        setError('Session expirée. Veuillez vous reconnecter.');
         setLoading(false);
         return;
       }
@@ -81,6 +84,8 @@ export default function DashboardPage() {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/auth';
+      } else {
+        setError('Erreur lors du chargement des données. Veuillez rafraîchir la page.');
       }
     } finally {
       setLoading(false);
@@ -89,29 +94,77 @@ export default function DashboardPage() {
 
   const loadStudentDashboard = async () => {
     try {
-      // Livres
-      const booksResponse = await bookService.getBooks({ limit: 1 });
-      const totalBooks = booksResponse.data?.total || 0;
+      console.log('🔍 Chargement des données dashboard étudiant...');
+      
+      // Initialisation avec des valeurs par défaut
+      let activeLoans = 0;
+      let overdueLoans = 0;
+      let unreadNotifications = 0;
 
-      // Emprunts
-      const loansResponse = await loanService.getMyLoans();
-      const loans = loansResponse.data || [];
-      const activeLoans = loans.filter((loan: any) => loan.status === 'active').length || 0;
-      const overdueLoans = loans.filter((loan: any) => loan.status === 'overdue').length || 0;
+      // 1. Emprunts de l'utilisateur - avec gestion d'erreur robuste
+      try {
+        console.log('📖 Chargement des emprunts utilisateur...');
+        const loansResponse = await loanService.getMyLoans();
+        console.log('📖 Réponse emprunts brute:', loansResponse);
+        
+        if (loansResponse.success && loansResponse.data) {
+          const loans = Array.isArray(loansResponse.data) ? loansResponse.data : 
+                       (loansResponse.data as any)?.loans ? (loansResponse.data as any).loans : [];
+          
+          activeLoans = loans.filter((loan: any) => 
+            loan.status === 'active' || loan.current_status === 'active'
+          ).length;
+          
+          overdueLoans = loans.filter((loan: any) => 
+            loan.status === 'overdue' || loan.current_status === 'overdue' ||
+            (loan.status === 'active' && loan.days_overdue > 0)
+          ).length;
+        }
+        console.log('✅ Emprunts traités:', { activeLoans, overdueLoans });
+      } catch (error) {
+        console.warn('⚠️ Erreur emprunts:', error);
+        activeLoans = 0;
+        overdueLoans = 0;
+      }
 
-      // Notifications
-      const notificationsResponse = await notificationService.getMyNotifications();
-      const unreadNotifications = notificationsResponse.data?.notifications?.filter((n: any) => !n.is_read).length || 0;
+      // 3. Notifications non lues - avec fallback
+      try {
+        console.log('🔔 Chargement des notifications...');
+        const notificationsResponse = await notificationService.getMyNotifications({ limit: 50 });
+        console.log('🔔 Réponse notifications brute:', notificationsResponse);
+        
+        if (notificationsResponse.success && notificationsResponse.data) {
+          const notifications = notificationsResponse.data.notifications || [];
+          unreadNotifications = Array.isArray(notifications) ? 
+            notifications.filter((n: any) => !n.is_read).length : 0;
+        }
+        console.log('✅ Notifications traitées:', unreadNotifications);
+      } catch (error) {
+        console.warn('⚠️ Erreur notifications:', error);
+        unreadNotifications = 0;
+      }
 
-      setStats({
-        totalBooks,
+      // 4. Mise à jour des stats avec les valeurs collectées
+      const finalStats = {
+        totalBooks: 0, // Plus nécessaire pour les étudiants
         activeLoans,
         unreadNotifications,
         overdueLoans
-      });
+      };
+      
+      console.log('📊 Stats finales étudiant:', finalStats);
+      setStats(finalStats);
       
     } catch (error) {
-      console.error('Erreur lors du chargement des données étudiant:', error);
+      console.error('❌ Erreur globale lors du chargement des données étudiant:', error);
+      
+      // Fallback complet avec des valeurs par défaut
+      setStats({
+        totalBooks: 0,
+        activeLoans: 0,
+        unreadNotifications: 0,
+        overdueLoans: 0
+      });
     }
   };
 
@@ -195,6 +248,26 @@ export default function DashboardPage() {
     );
   }
 
+  if (error) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Rafraîchir la page
+            </button>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   if (!user) return null;
 
   const isAdmin = user?.role === 'admin';
@@ -214,23 +287,23 @@ export default function DashboardPage() {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Livres */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">
-                {isAdmin ? 'Total Livres' : 'Livres Disponibles'}
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {currentStats.totalBooks}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-blue-600" />
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
+        {/* Livres - seulement pour admin */}
+        {isAdmin && (
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Livres</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {currentStats.totalBooks}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-blue-600" />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Emprunts */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">

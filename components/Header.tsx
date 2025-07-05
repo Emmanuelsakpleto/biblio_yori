@@ -78,7 +78,9 @@ const Header = () => {
             <nav className="hidden md:flex items-center space-x-1">
               <NavLink href="/" label="Accueil" />
               <NavLink href="/books" label="Catalogue" />
-              <NavLink href="/search" label="Recherche" />
+              {user?.role === 'student' && (
+                <NavLink href="/dashboard" label="Mon espace" />
+              )}
               {(user?.role === 'admin' || user?.role === 'librarian') && (
                 <NavLink href="/dashboard" label="Administration" />
               )}
@@ -199,6 +201,7 @@ const Header = () => {
             <nav className="px-4 py-4 space-y-2">
               <MobileNavLink href="/" label="Accueil" />
               <MobileNavLink href="/books" label="Catalogue" />
+              {user?.role === 'student' && <MobileNavLink href="/dashboard" label="Mon espace" />}
               {user?.role === 'admin' && <MobileNavLink href="/dashboard" label="Administration" />}
               {!user && (
                 <Link

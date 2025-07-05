@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import Link from 'next/link';
+import { useLikes } from '../contexts/LikesContext';
 
 interface BookCardProps {
   book: {
@@ -29,74 +30,92 @@ interface BookCardProps {
 
 const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
   const router = useRouter();
+  const { getLikes, setLikes, isStale } = useLikes();
+  
   // Système de likes réactivé avec authentification correcte
-  const [likes, setLikes] = React.useState<number | null>(null);
+  const [likes, setLikesLocal] = React.useState<number | null>(null);
   const [likeLoading, setLikeLoading] = React.useState(false);
   const [likeError, setLikeError] = React.useState<string | null>(null);
   const [isLiked, setIsLiked] = React.useState(false);
+  const [hasLoadedLikes, setHasLoadedLikes] = React.useState(false);
 
   // Utilitaire pour l'URL de l'API backend
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-  // Charger les likes du livre
+  // Charger les likes du livre - avec cache et limitation
   React.useEffect(() => {
     const fetchLikes = async () => {
+      // Éviter les requêtes multiples
+      if (hasLoadedLikes) return;
+      
+      // Vérifier le cache d'abord
+      const cachedData = getLikes(book.id);
+      if (cachedData) {
+        setLikesLocal(cachedData.likes);
+        setIsLiked(cachedData.isLiked);
+        setHasLoadedLikes(true);
+        return;
+      }
+      
       const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await fetch(`${API_URL}/books/${book.id}/likes`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Réponse du serveur pour getLikes:', data);
-            
-            // Vérifier la structure de la réponse
-            if (data.success && data.data) {
-              setLikes(data.data.likes ?? 0);
-              setIsLiked(data.data.isLiked ?? false);
-            } else {
-              // Format direct sans wrapper
-              setLikes(data.likes ?? 0);
-              setIsLiked(data.isLiked ?? false);
-            }
-          } else if (response.status === 401) {
-            // Token expiré, nettoyer l'authentification
-            console.log('Token expiré pour les likes');
-            setLikes(0);
-          } else {
-            setLikes(0);
+      if (!token) {
+        setLikesLocal(0);
+        setHasLoadedLikes(true);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/books/${book.id}/likes`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        } catch (error) {
-          console.error('Erreur lors du chargement des likes:', error);
-          setLikes(0);
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          let likesCount = 0;
+          let userLiked = false;
+          
+          // Vérifier la structure de la réponse
+          if (data.success && data.data) {
+            likesCount = data.data.likes ?? 0;
+            userLiked = data.data.isLiked ?? false;
+          } else {
+            // Format direct sans wrapper
+            likesCount = data.likes ?? 0;
+            userLiked = data.isLiked ?? false;
+          }
+          
+          setLikesLocal(likesCount);
+          setIsLiked(userLiked);
+          
+          // Mettre en cache
+          setLikes(book.id, { likes: likesCount, isLiked: userLiked });
+        } else if (response.status === 401) {
+          // Token expiré, nettoyer l'authentification
+          console.log('Token expiré pour les likes');
+          setLikesLocal(0);
+        } else if (response.status === 429) {
+          // Trop de requêtes, ne pas faire d'autres tentatives
+          console.log('Trop de requêtes pour les likes');
+          setLikesLocal(0);
+        } else {
+          setLikesLocal(0);
         }
-      } else {
-        // Pas connecté, pas de likes
-        setLikes(0);
+      } catch (error) {
+        console.error('Erreur lors du chargement des likes:', error);
+        setLikesLocal(0);
+      } finally {
+        setHasLoadedLikes(true);
       }
     };
 
-    fetchLikes();
-  }, [book.id, API_URL]);
-  //       .then(res => {
-  //         if (res.ok) {
-  //           return res.json();
-  //         }
-  //         // Si erreur d'auth, pas de likes
-  //         return { likes: 0 };
-  //       })
-  //       .then(data => setLikes(data.likes ?? 0))
-  //       .catch(() => setLikes(0));
-  //   } else {
-  //     // Pas connecté, pas de likes
-  //     setLikes(0);
-  //   }
-  // }, [book.id, API_URL]);
+    // Délai pour éviter les requêtes simultanées
+    const timer = setTimeout(fetchLikes, Math.random() * 200);
+    return () => clearTimeout(timer);
+  }, [book.id, API_URL, hasLoadedLikes, getLikes, setLikes]);
 
   const handleClick = () => {
     if (onClick) {
@@ -132,24 +151,43 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
         const data = await response.json();
         console.log('Réponse du serveur pour like:', data);
         
+        let likesCount = 0;
+        let userLiked = false;
+        
         // Vérifier la structure de la réponse
         if (data.success && data.data) {
-          setLikes(data.data.likes ?? 0);
-          setIsLiked(data.data.isLiked ?? false);
+          likesCount = data.data.likes ?? 0;
+          userLiked = data.data.isLiked ?? false;
         } else {
           // Format direct sans wrapper
-          setLikes(data.likes ?? 0);
-          setIsLiked(data.isLiked ?? false);
+          likesCount = data.likes ?? 0;
+          userLiked = data.isLiked ?? false;
         }
+        
+        setLikesLocal(likesCount);
+        setIsLiked(userLiked);
+        
+        // Mettre à jour le cache
+        setLikes(book.id, { likes: likesCount, isLiked: userLiked });
+        
+        // Afficher un message de succès
+        console.log(`Like ${userLiked ? 'ajouté' : 'retiré'} avec succès`);
       } else if (response.status === 401) {
         console.log('Token expiré pour le like');
         setLikeError('Authentification expirée');
+      } else if (response.status === 429) {
+        console.log('Trop de requêtes pour le like');
+        setLikeError('Trop de requêtes, veuillez patienter');
       } else {
         setLikeError('Erreur lors du like');
       }
     } catch (error) {
       console.error('Erreur lors du like:', error);
-      setLikeError('Erreur réseau');
+      if (error instanceof Error && error.message.includes('429')) {
+        setLikeError('Trop de requêtes, veuillez patienter');
+      } else {
+        setLikeError('Erreur réseau');
+      }
     } finally {
       setLikeLoading(false);
     }

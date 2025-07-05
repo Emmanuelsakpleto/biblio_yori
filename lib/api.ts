@@ -166,6 +166,10 @@ const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
       // Ne pas rediriger automatiquement, laisser les composants gérer la redirection
       throw new Error('Session expirée');
     }
+    if (response.status === 429) {
+      // Trop de requêtes, attendre un peu avant de réessayer
+      throw new Error('Trop de requêtes, veuillez patienter');
+    }
     throw new Error(`Erreur HTTP: ${response.status}`);
   }
 
@@ -180,6 +184,30 @@ export const authService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 400) {
+        // Identifiants incorrects - personnaliser le message
+        const errorData = await response.json().catch(() => null);
+        if (errorData?.message === 'Identifiants invalides' || 
+            errorData?.message?.includes('Identifiants') ||
+            errorData?.message?.includes('invalide')) {
+          throw new Error('Email ou mot de passe incorrect');
+        }
+        if (errorData?.message === 'Compte désactivé') {
+          throw new Error('Votre compte a été désactivé. Contactez un administrateur.');
+        }
+        throw new Error(errorData?.message || 'Email ou mot de passe incorrect');
+      }
+      if (response.status === 429) {
+        throw new Error('Trop de tentatives de connexion. Veuillez patienter.');
+      }
+      if (response.status >= 500) {
+        throw new Error('Erreur du serveur. Veuillez réessayer plus tard.');
+      }
+      throw new Error('Erreur de connexion');
+    }
+
     return response.json();
   },
 
@@ -197,6 +225,25 @@ export const authService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
+
+    if (!response.ok) {
+      if (response.status === 400) {
+        // Erreur de validation ou email déjà utilisé
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Données d\'inscription invalides');
+      }
+      if (response.status === 409) {
+        throw new Error('Cet email est déjà utilisé');
+      }
+      if (response.status === 429) {
+        throw new Error('Trop de tentatives d\'inscription. Veuillez patienter.');
+      }
+      if (response.status >= 500) {
+        throw new Error('Erreur du serveur. Veuillez réessayer plus tard.');
+      }
+      throw new Error('Erreur lors de l\'inscription');
+    }
+
     return response.json();
   },
 
@@ -499,8 +546,14 @@ export const bookService = {
 
 // Services des emprunts
 export const loanService = {
-  async getMyLoans(): Promise<ApiResponse<Loan[]>> {
-    return authenticatedFetch('/loans/me');
+  async getMyLoans(params?: { status?: string, include_history?: boolean, page?: number, limit?: number }): Promise<ApiResponse<Loan[]>> {
+    const query = new URLSearchParams();
+    if (params?.status) query.append('status', params.status);
+    if (params?.include_history !== undefined) query.append('include_history', params.include_history.toString());
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    const queryString = query.toString();
+    return authenticatedFetch(`/loans/me${queryString ? `?${queryString}` : ''}`);
   },
 
   async getAllLoans(params?: { status?: string, user_id?: number, page?: number, limit?: number }): Promise<ApiResponse<{ loans: Loan[], pagination: any }>> {

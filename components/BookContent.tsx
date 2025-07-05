@@ -25,12 +25,16 @@ const BookContent = ({ bookId }: BookContentProps) => {
   const [error, setError] = useState<string | null>(null);
   const [canBorrow, setCanBorrow] = useState(false);
   const [borrowing, setBorrowing] = useState(false);
+  const [userHasActiveLoan, setUserHasActiveLoan] = useState(false);
 
   console.log('🔥 BookContent component is loading for bookId:', bookId);
 
   useEffect(() => {
     fetchBook();
-  }, [bookId]);
+    if (user) {
+      checkUserLoanStatus();
+    }
+  }, [bookId, user]);
 
   const fetchBook = async () => {
     try {
@@ -40,7 +44,8 @@ const BookContent = ({ bookId }: BookContentProps) => {
       const response = await bookService.getBook(parseInt(bookId));
       if (response.success && response.data) {
         setSelectedBook(response.data);
-        setCanBorrow(response.data.available_copies > 0 && user !== null);
+        // Mettre à jour canBorrow en fonction des données actualisées
+        updateCanBorrowStatus(response.data);
       } else {
         setError(response.message || 'Livre introuvable');
       }
@@ -51,29 +56,96 @@ const BookContent = ({ bookId }: BookContentProps) => {
     }
   };
 
+  const checkUserLoanStatus = async () => {
+    if (!user) {
+      setUserHasActiveLoan(false);
+      return;
+    }
+
+    try {
+      const response = await loanService.getMyLoans();
+      if (response.success && response.data) {
+        // Vérifier si l'utilisateur a déjà un emprunt actif pour ce livre
+        const hasActiveLoan = response.data.some((loan: any) => 
+          loan.book_id === parseInt(bookId) && 
+          ['pending', 'approved', 'active'].includes(loan.status)
+        );
+        setUserHasActiveLoan(hasActiveLoan);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification des emprunts:', error);
+    }
+  };
+
+  const updateCanBorrowStatus = (book: Book) => {
+    const hasAvailableCopies = book.available_copies > 0;
+    const isUserLoggedIn = user !== null;
+    const hasNoActiveLoan = !userHasActiveLoan;
+    
+    setCanBorrow(hasAvailableCopies && isUserLoggedIn && hasNoActiveLoan);
+  };
+
+  // Mettre à jour canBorrow quand les états changent
+  useEffect(() => {
+    if (selectedBook) {
+      updateCanBorrowStatus(selectedBook);
+    }
+  }, [selectedBook, user, userHasActiveLoan]);
+
   const handleBorrow = async () => {
-    if (!selectedBook || !user) return;
+    if (!selectedBook || !user) {
+      toast.error('Vous devez être connecté pour emprunter un livre', {
+        style: { background: "#ef4444", color: '#fff' },
+        hideProgressBar: true
+      });
+      return;
+    }
+
+    if (userHasActiveLoan) {
+      toast.error('Vous avez déjà un emprunt actif pour ce livre', {
+        style: { background: "#ef4444", color: '#fff' },
+        hideProgressBar: true
+      });
+      return;
+    }
+
+    if (selectedBook.available_copies <= 0) {
+      toast.error('Ce livre n\'est plus disponible', {
+        style: { background: "#ef4444", color: '#fff' },
+        hideProgressBar: true
+      });
+      return;
+    }
     
     try {
       setBorrowing(true);
       const response = await loanService.createLoan(selectedBook.id);
       
       if (response.success) {
-        toast.success('Livre emprunté avec succès !', {
+        toast.success('Demande d\'emprunt envoyée avec succès ! Un administrateur va valider votre demande.', {
           style: { background: "#22c55e", color: '#fff' },
-          hideProgressBar: true
+          hideProgressBar: true,
+          autoClose: 5000
         });
         
+        // Mettre à jour les états locaux
+        setUserHasActiveLoan(true);
+        setCanBorrow(false);
+        
         // Mettre à jour les informations du livre
-        fetchBook();
+        await fetchBook();
+        await checkUserLoanStatus();
       } else {
-        toast.error(response.message || 'Erreur lors de l\'emprunt', {
+        const errorMessage = response.message || 'Erreur lors de l\'emprunt';
+        toast.error(errorMessage, {
           style: { background: "#ef4444", color: '#fff' },
           hideProgressBar: true
         });
       }
-    } catch (error) {
-      toast.error('Erreur lors de l\'emprunt', {
+    } catch (error: any) {
+      console.error('Erreur lors de l\'emprunt:', error);
+      const errorMessage = error.message || 'Erreur lors de l\'emprunt';
+      toast.error(errorMessage, {
         style: { background: "#ef4444", color: '#fff' },
         hideProgressBar: true
       });
@@ -191,13 +263,110 @@ const BookContent = ({ bookId }: BookContentProps) => {
             </div>
             <div style={{ margin: '10px 0 18px 0', fontSize: 15 }}>
               <b>Disponibilité :</b> <span style={{ color: selectedBook.available_copies > 0 ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{selectedBook.available_copies} / {selectedBook.total_copies}</span> exemplaires
+              {userHasActiveLoan && (
+                <div style={{ marginTop: '8px', color: '#f59e0b', fontWeight: 600, fontSize: '14px' }}>
+                  ⚠️ Vous avez déjà un emprunt actif pour ce livre
+                </div>
+              )}
+              {!user && (
+                <div style={{ marginTop: '8px', color: '#6b7280', fontSize: '14px' }}>
+                  Connectez-vous pour emprunter ce livre
+                </div>
+              )}
             </div>
           </div>
           {/* Bouton Emprunter dans la card */}
-          {canBorrow && (
-            <button className='saveButton' onClick={handleBorrow} disabled={borrowing} style={{ background: '#22c55e', color: '#fff', fontWeight: 600, borderRadius: 22, height: 44, padding: '0 22px', marginLeft: 32 }}>
-              {borrowing ? 'Emprunt...' : 'Emprunter'}
-            </button>
+          {user && (
+            <div style={{ marginLeft: 32 }}>
+              {canBorrow && !userHasActiveLoan ? (
+                <button 
+                  className='saveButton' 
+                  onClick={handleBorrow} 
+                  disabled={borrowing} 
+                  style={{ 
+                    background: '#22c55e', 
+                    color: '#fff', 
+                    fontWeight: 600, 
+                    borderRadius: 22, 
+                    height: 44, 
+                    padding: '0 22px',
+                    opacity: borrowing ? 0.7 : 1,
+                    cursor: borrowing ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {borrowing ? 'Emprunt en cours...' : 'Emprunter'}
+                </button>
+              ) : userHasActiveLoan ? (
+                <button 
+                  className='saveButton' 
+                  disabled 
+                  style={{ 
+                    background: '#f59e0b', 
+                    color: '#fff', 
+                    fontWeight: 600, 
+                    borderRadius: 22, 
+                    height: 44, 
+                    padding: '0 22px',
+                    opacity: 0.7,
+                    cursor: 'not-allowed'
+                  }}
+                >
+                  Déjà emprunté
+                </button>
+              ) : selectedBook.available_copies <= 0 ? (
+                <button 
+                  className='saveButton' 
+                  disabled 
+                  style={{ 
+                    background: '#ef4444', 
+                    color: '#fff', 
+                    fontWeight: 600, 
+                    borderRadius: 22, 
+                    height: 44, 
+                    padding: '0 22px',
+                    opacity: 0.7,
+                    cursor: 'not-allowed'
+                  }}
+                >
+                  Indisponible
+                </button>
+              ) : (
+                <button 
+                  className='saveButton' 
+                  disabled 
+                  style={{ 
+                    background: '#6b7280', 
+                    color: '#fff', 
+                    fontWeight: 600, 
+                    borderRadius: 22, 
+                    height: 44, 
+                    padding: '0 22px',
+                    opacity: 0.7,
+                    cursor: 'not-allowed'
+                  }}
+                >
+                  Non disponible
+                </button>
+              )}
+            </div>
+          )}
+          {!user && (
+            <div style={{ marginLeft: 32 }}>
+              <button 
+                className='saveButton' 
+                onClick={() => router.push('/auth')}
+                style={{ 
+                  background: '#3b82f6', 
+                  color: '#fff', 
+                  fontWeight: 600, 
+                  borderRadius: 22, 
+                  height: 44, 
+                  padding: '0 22px'
+                }}
+              >
+                Se connecter
+              </button>
+            </div>
           )}
         </div>
 
