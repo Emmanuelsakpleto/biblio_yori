@@ -7,6 +7,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Editor, useDomValue } from 'reactjs-editor';
 import { bookService, loanService, type Book } from '../lib/api';
+import BookReviews from './BookReviews';
 import { useAuth } from '../contexts/AuthContext';
 import '../app/styles/BookContent.css';
 
@@ -283,10 +284,15 @@ const BookContent = ({ bookId }: BookContentProps) => {
         </main>`}
       />
 
+      {/* Avis des lecteurs */}
+      {selectedBook && (
+        <BookReviews bookId={selectedBook.id} />
+      )}
+
       <ToastContainer />
     </motion.div>
   );
 };
 
 export default BookContent;
-console.log('��� FICHIER ACTUEL: BookContent.tsx - Page de détail livre');
+console.log('FICHIER ACTUEL: BookContent.tsx - Page de détail livre');

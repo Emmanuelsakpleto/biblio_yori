@@ -93,6 +93,12 @@ const Sidebar = () => {
       description: "Gestion des comptes"
     },
     {
+      title: "Modération d'avis",
+      href: "/dashboard/reviews",
+      icon: Star,
+      description: "Modérer les avis utilisateurs"
+    },
+    {
       title: "Notifications",
       href: "/dashboard/notifications",
       icon: Bell,

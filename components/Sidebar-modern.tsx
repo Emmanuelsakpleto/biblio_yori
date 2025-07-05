@@ -19,7 +19,8 @@ import {
   X,
   ChevronDown,
   Shield,
-  GraduationCap
+  GraduationCap,
+  Star
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -101,6 +102,11 @@ const Sidebar = () => {
       title: "Utilisateurs",
       icon: <Users className="w-5 h-5" />,
       href: "/dashboard/users"
+    },
+    {
+      title: "Modération d'avis",
+      icon: <Star className="w-5 h-5" />,
+      href: "/dashboard/reviews"
     },
     {
       title: "Notifications",
