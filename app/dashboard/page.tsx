@@ -44,7 +44,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      loadDashboardData();
+      // Vérifier que l'utilisateur est bien authentifié
+      const token = localStorage.getItem('token');
+      if (token) {
+        loadDashboardData();
+      } else {
+        console.warn('Aucun token d\'authentification trouvé');
+        setLoading(false);
+      }
     }
   }, [user]);
 
@@ -52,13 +59,29 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       
+      // Vérifier à nouveau le token avant les requêtes
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('Aucun token trouvé pour charger le dashboard');
+        setLoading(false);
+        return;
+      }
+      
       if (user?.role === 'admin') {
         await loadAdminDashboard();
       } else {
         await loadStudentDashboard();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors du chargement du dashboard:', error);
+      
+      // Si c'est une erreur 401, rediriger vers la page de connexion
+      if (error?.status === 401 || error?.message?.includes('401')) {
+        console.error('Token expiré ou invalide, redirection vers la connexion');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/auth';
+      }
     } finally {
       setLoading(false);
     }

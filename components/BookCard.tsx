@@ -29,19 +29,65 @@ interface BookCardProps {
 
 const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
   const router = useRouter();
+  // Système de likes réactivé avec authentification correcte
   const [likes, setLikes] = React.useState<number | null>(null);
   const [likeLoading, setLikeLoading] = React.useState(false);
   const [likeError, setLikeError] = React.useState<string | null>(null);
+  const [isLiked, setIsLiked] = React.useState(false);
 
   // Utilitaire pour l'URL de l'API backend
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
+  // Charger les likes du livre
   React.useEffect(() => {
-    fetch(`${API_URL}/books/${book.id}/likes`)
-      .then(res => res.json())
-      .then(data => setLikes(data.likes ?? 0))
-      .catch(() => setLikes(0));
+    const fetchLikes = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await fetch(`${API_URL}/books/${book.id}/likes`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setLikes(data.likes ?? 0);
+            setIsLiked(data.isLiked ?? false);
+          } else if (response.status === 401) {
+            // Token expiré, nettoyer l'authentification
+            console.log('Token expiré pour les likes');
+            setLikes(0);
+          } else {
+            setLikes(0);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des likes:', error);
+          setLikes(0);
+        }
+      } else {
+        // Pas connecté, pas de likes
+        setLikes(0);
+      }
+    };
+
+    fetchLikes();
   }, [book.id, API_URL]);
+  //       .then(res => {
+  //         if (res.ok) {
+  //           return res.json();
+  //         }
+  //         // Si erreur d'auth, pas de likes
+  //         return { likes: 0 };
+  //       })
+  //       .then(data => setLikes(data.likes ?? 0))
+  //       .catch(() => setLikes(0));
+  //   } else {
+  //     // Pas connecté, pas de likes
+  //     setLikes(0);
+  //   }
+  // }, [book.id, API_URL]);
 
   const handleClick = () => {
     if (onClick) {
@@ -51,20 +97,41 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
     }
   };
 
+  // Gérer le like d'un livre
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setLikeError(null);
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('Pas de token, like impossible');
+      return;
+    }
+
     setLikeLoading(true);
+    setLikeError(null);
+
     try {
-      const res = await fetch(`${API_URL}/books/${book.id}/like`, { method: 'POST', credentials: 'include' });
-      if (res.status === 401) {
-        setLikeError('Connecte-toi pour liker ce livre.');
-        return;
+      const response = await fetch(`${API_URL}/books/${book.id}/like`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLikes(data.likes ?? 0);
+        setIsLiked(data.isLiked ?? false);
+      } else if (response.status === 401) {
+        console.log('Token expiré pour le like');
+        setLikeError('Authentification expirée');
+      } else {
+        setLikeError('Erreur lors du like');
       }
-      const data = await res.json();
-      setLikes(data.likes ?? (likes || 0) + 1);
-    } catch (err) {
-      setLikeError('Erreur lors du like.');
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      setLikeError('Erreur réseau');
     } finally {
       setLikeLoading(false);
     }
@@ -159,7 +226,7 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
               </div>
               <div className="bg-white rounded-xl shadow border flex items-center justify-center px-3 py-2">
                 <Button size="icon" variant="ghost" className="" onClick={handleLike} disabled={likeLoading} title="Like">
-                  <Heart className={"w-5 h-5 " + (likes && likes > 0 ? "text-red-500 fill-red-500" : "text-slate-400")}/>
+                  <Heart className={`w-5 h-5 ${isLiked ? "text-red-500 fill-red-500" : "text-slate-400"}`}/>
                   <span className="ml-1 text-xs text-slate-700">{likes ?? 0}</span>
                 </Button>
               </div>
@@ -226,7 +293,7 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
           </div>
           <div className="bg-white rounded-xl shadow border flex items-center justify-center px-3 py-2">
             <Button size="icon" variant="ghost" className="" onClick={handleLike} disabled={likeLoading} title="Like">
-              <Heart className={"w-5 h-5 " + (likes && likes > 0 ? "text-red-500 fill-red-500" : "text-slate-400")}/>
+              <Heart className={`w-5 h-5 ${isLiked ? "text-red-500 fill-red-500" : "text-slate-400"}`}/>
               <span className="ml-1 text-xs text-slate-700">{likes ?? 0}</span>
             </Button>
           </div>
