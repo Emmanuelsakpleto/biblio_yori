@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { BookOpen, Eye, Heart, Plus, Star, Users } from 'lucide-react';
+import { BookOpen, Eye, Heart, Plus, Star, Users, MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -29,13 +29,50 @@ interface BookCardProps {
 
 const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
   const router = useRouter();
-  
+  const [likes, setLikes] = React.useState<number | null>(null);
+  const [likeLoading, setLikeLoading] = React.useState(false);
+  const [likeError, setLikeError] = React.useState<string | null>(null);
+
+  // Utilitaire pour l'URL de l'API backend
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+  React.useEffect(() => {
+    fetch(`${API_URL}/books/${book.id}/likes`)
+      .then(res => res.json())
+      .then(data => setLikes(data.likes ?? 0))
+      .catch(() => setLikes(0));
+  }, [book.id, API_URL]);
+
   const handleClick = () => {
     if (onClick) {
       onClick();
     } else {
       router.push(`/book/${book.id}`);
     }
+  };
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLikeError(null);
+    setLikeLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/books/${book.id}/like`, { method: 'POST', credentials: 'include' });
+      if (res.status === 401) {
+        setLikeError('Connecte-toi pour liker ce livre.');
+        return;
+      }
+      const data = await res.json();
+      setLikes(data.likes ?? (likes || 0) + 1);
+    } catch (err) {
+      setLikeError('Erreur lors du like.');
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
+  const handleAddReview = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/dashboard/reviews/add?bookId=${book.id}`);
   };
 
   const getImageUrl = () => {
@@ -64,7 +101,6 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
-          
           {/* Contenu */}
           <div className="flex-1 space-y-3">
             <div>
@@ -73,7 +109,6 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
               </h3>
               <p className="text-slate-600 font-medium">{book.author}</p>
             </div>
-            
             <div className="flex items-center gap-3">
               {book.category && (
                 <Badge variant="outline" className="text-xs bg-slate-50/80">
@@ -91,13 +126,11 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
                 {book.available_copies > 0 ? `${book.available_copies} disponible(s)` : "Indisponible"}
               </Badge>
             </div>
-            
             {book.description && (
               <p className="text-slate-600 text-sm line-clamp-2 leading-relaxed">
                 {book.description}
               </p>
             )}
-            
             {book.rating && (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -117,9 +150,25 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
                 </span>
               </div>
             )}
+            {/* Actions avis et like dans des cards blanches */}
+            <div className="flex gap-3 mt-2">
+              <div className="bg-white rounded-xl shadow border flex items-center justify-center px-3 py-2">
+                <Button size="icon" variant="ghost" className="" onClick={handleAddReview} title="Laisser un avis">
+                  <MessageCircle className="w-5 h-5 text-blue-500" />
+                </Button>
+              </div>
+              <div className="bg-white rounded-xl shadow border flex items-center justify-center px-3 py-2">
+                <Button size="icon" variant="ghost" className="" onClick={handleLike} disabled={likeLoading} title="Like">
+                  <Heart className={"w-5 h-5 " + (likes && likes > 0 ? "text-red-500 fill-red-500" : "text-slate-400")}/>
+                  <span className="ml-1 text-xs text-slate-700">{likes ?? 0}</span>
+                </Button>
+              </div>
+            </div>
+            {likeError && (
+              <div className="text-xs text-red-500 mt-1">{likeError}</div>
+            )}
           </div>
-          
-          {/* Actions */}
+          {/* Actions classiques */}
           <div className="flex flex-col justify-center gap-3">
             <Button variant="outline" size="sm" asChild>
               <Link href={`/book/${book.id}`} onClick={(e) => e.stopPropagation()}>
@@ -127,7 +176,6 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
                 Détails
               </Link>
             </Button>
-            
             {book.available_copies > 0 && (
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 mr-2" />
@@ -156,10 +204,6 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
           unoptimized
           className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
         />
-        
-        {/* Overlay au survol */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
-        
         {/* Badge de disponibilité */}
         <div className="absolute top-4 right-4">
           <Badge 
@@ -173,35 +217,21 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
             {book.available_copies > 0 ? `${book.available_copies} dispo` : "Indisponible"}
           </Badge>
         </div>
-        
-        {/* Actions flottantes au survol */}
-        <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
-          <div className="flex gap-2">
-            <Button 
-              size="sm" 
-              variant="secondary" 
-              className="bg-white/90 hover:bg-white text-slate-900 backdrop-blur-sm flex-1"
-              asChild
-            >
-              <Link href={`/book/${book.id}`} onClick={(e) => e.stopPropagation()}>
-                <Eye className="w-4 h-4 mr-2" />
-                Voir
-              </Link>
+        {/* Actions flottantes toujours visibles en bas à droite */}
+        <div className="absolute bottom-4 right-4 flex flex-col gap-3 z-10">
+          <div className="bg-white rounded-xl shadow border flex items-center justify-center px-3 py-2">
+            <Button size="icon" variant="ghost" className="" onClick={handleAddReview} title="Laisser un avis">
+              <MessageCircle className="w-5 h-5 text-blue-500" />
             </Button>
-            
-            {book.available_copies > 0 && (
-              <Button 
-                size="sm" 
-                className="bg-blue-600/90 hover:bg-blue-700/90 backdrop-blur-sm flex-1"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Emprunter
-              </Button>
-            )}
+          </div>
+          <div className="bg-white rounded-xl shadow border flex items-center justify-center px-3 py-2">
+            <Button size="icon" variant="ghost" className="" onClick={handleLike} disabled={likeLoading} title="Like">
+              <Heart className={"w-5 h-5 " + (likes && likes > 0 ? "text-red-500 fill-red-500" : "text-slate-400")}/>
+              <span className="ml-1 text-xs text-slate-700">{likes ?? 0}</span>
+            </Button>
           </div>
         </div>
       </div>
-      
       {/* Contenu */}
       <div className="p-6 space-y-4">
         <div>
@@ -210,14 +240,12 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
           </h3>
           <p className="text-slate-600 font-medium mt-1">{book.author}</p>
         </div>
-        
         <div className="flex items-center justify-between">
           {book.category && (
             <Badge variant="outline" className="text-xs bg-slate-50/80 border-slate-200">
               {book.category}
             </Badge>
           )}
-          
           {book.rating && (
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -227,7 +255,6 @@ const BookCard = ({ book, viewMode = 'grid', onClick }: BookCardProps) => {
             </div>
           )}
         </div>
-        
         {book.description && (
           <p className="text-slate-600 text-sm line-clamp-2 leading-relaxed">
             {book.description}

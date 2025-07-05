@@ -9,6 +9,7 @@ import { Editor, useDomValue } from 'reactjs-editor';
 import { bookService, loanService, type Book } from '../lib/api';
 import BookReviews from './BookReviews';
 import { useAuth } from '../contexts/AuthContext';
+import { ArrowLeft, Home, Save } from 'lucide-react';
 import '../app/styles/BookContent.css';
 
 interface BookContentProps {
@@ -152,145 +153,71 @@ const BookContent = ({ bookId }: BookContentProps) => {
   }
 
   return (
-    <motion.div 
-      transition={{ type: 'spring', damping: 40, mass: 0.75 }}
-      initial={{ opacity: 0, x: 1000 }} 
-      animate={{ opacity: 1, x: 0 }}
-    >
-      <motion.section 
-        transition={{ type: 'spring', damping: 44, mass: 0.75 }}
-        initial={{ opacity: 0, y: -1000 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        className='appBar'
+    <div style={{ position: 'relative', minHeight: '100vh' }}>
+      {/* Boutons Retour & Accueil en haut à gauche, Sauvegarder en haut à droite */}
+      <div style={{ position: 'fixed', top: 32, left: 32, zIndex: 20, display: 'flex', gap: 14 }}>
+        <button onClick={handleGoBack} title="Retour" style={{ background: '#f3f4f6', border: 'none', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px #0001', cursor: 'pointer', transition: 'background 0.2s' }}>
+          <ArrowLeft size={22} color="#64748b" />
+        </button>
+        <button onClick={handleGoHome} title="Accueil" style={{ background: '#f3f4f6', border: 'none', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px #0001', cursor: 'pointer', transition: 'background 0.2s' }}>
+          <Home size={22} color="#22c55e" />
+        </button>
+      </div>
+      <div style={{ position: 'fixed', top: 32, right: 32, zIndex: 20, display: 'flex', gap: 14 }}>
+        <button onClick={handleSave} title="Sauvegarder" style={{ background: '#f3f4f6', border: 'none', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px #0001', cursor: 'pointer', transition: 'background 0.2s' }}>
+          <Save size={22} color="#6366f1" />
+        </button>
+      </div>
+      <motion.div 
+        transition={{ type: 'spring', damping: 40, mass: 0.75 }}
+        initial={{ opacity: 0, x: 1000 }} 
+        animate={{ opacity: 1, x: 0 }}
+        style={{ maxWidth: 900, margin: '40px auto', background: '#fff', borderRadius: 24, boxShadow: '0 4px 32px #0001', padding: 0 }}
       >
-        <div className="left-icons" style={{ 
-          display: 'flex', 
-          gap: '15px', 
-          alignItems: 'center',
-          padding: '5px'
-        }}>
-          <button 
-            onClick={handleGoBack} 
-            style={{ 
-              cursor: 'pointer',
-              padding: '10px 15px',
-              borderRadius: '8px',
-              transition: 'all 0.2s',
-              backgroundColor: '#daa4a4',
-              color: '#fff',
-              border: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px'
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLElement).style.backgroundColor = '#c89393';
-              (e.target as HTMLElement).style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLElement).style.backgroundColor = '#daa4a4';
-              (e.target as HTMLElement).style.transform = 'translateY(0)';
-            }}
-            title="Retour à la page précédente"
-          >
-            <i style={{ fontSize: '16px' }} className="fas fa-chevron-left"></i>
-            <span>Retour</span>
-          </button>
-          <button 
-            onClick={handleGoHome} 
-            style={{ 
-              cursor: 'pointer',
-              padding: '10px 15px',
-              borderRadius: '8px',
-              transition: 'all 0.2s',
-              backgroundColor: '#22c55e',
-              color: '#fff',
-              border: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px'
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLElement).style.backgroundColor = '#16a34a';
-              (e.target as HTMLElement).style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLElement).style.backgroundColor = '#22c55e';
-              (e.target as HTMLElement).style.transform = 'translateY(0)';
-            }}
-            title="Retour à l'accueil"
-          >
-            <i style={{ fontSize: '16px' }} className="fas fa-home"></i>
-            <span>Accueil</span>
-          </button>
-        </div>
-        <div className="title">
-          <h2 style={{
-            textAlign: 'center',
-            textTransform: 'uppercase',
-            paddingLeft: '100px'
-          }}>
-            {selectedBook.title}
-          </h2>
-        </div>
-        <div className="icons">
+        {/* Header visuel */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', padding: 32, borderBottom: '1px solid #f3f3f3', background: 'linear-gradient(90deg,#f8eadd 60%,#fff 100%)', borderTopLeftRadius: 24, borderTopRightRadius: 24, position: 'relative' }}>
+          {/* Image de couverture */}
+          <div style={{ flex: '0 0 160px', marginRight: 32, marginBottom: 16 }}>
+            <img src={selectedBook.cover_image || '/images/default-book.png'} alt={selectedBook.title} style={{ width: 160, height: 220, objectFit: 'cover', borderRadius: 12, boxShadow: '0 2px 8px #0002', background: '#eee' }} />
+          </div>
+          {/* Infos principales */}
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0 }}>{selectedBook.title}</h1>
+            <div style={{ fontSize: 18, color: '#666', margin: '8px 0 16px 0' }}>par <b>{selectedBook.author}</b></div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ background: '#f3f3f3', borderRadius: 8, padding: '4px 12px', fontSize: 14 }}>{selectedBook.category || 'Sans catégorie'}</span>
+              <span style={{ background: '#f3f3f3', borderRadius: 8, padding: '4px 12px', fontSize: 14 }}>Année : {selectedBook.publication_year || 'N/A'}</span>
+              <span style={{ background: '#f3f3f3', borderRadius: 8, padding: '4px 12px', fontSize: 14 }}>ISBN : {selectedBook.isbn || 'N/A'}</span>
+            </div>
+            <div style={{ margin: '10px 0 18px 0', fontSize: 15 }}>
+              <b>Disponibilité :</b> <span style={{ color: selectedBook.available_copies > 0 ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{selectedBook.available_copies} / {selectedBook.total_copies}</span> exemplaires
+            </div>
+          </div>
+          {/* Bouton Emprunter dans la card */}
           {canBorrow && (
-            <button 
-              className='saveButton' 
-              onClick={handleBorrow}
-              disabled={borrowing}
-              style={{ marginRight: '10px', background: '#22c55e' }}
-            >
+            <button className='saveButton' onClick={handleBorrow} disabled={borrowing} style={{ background: '#22c55e', color: '#fff', fontWeight: 600, borderRadius: 22, height: 44, padding: '0 22px', marginLeft: 32 }}>
               {borrowing ? 'Emprunt...' : 'Emprunter'}
             </button>
           )}
-          <button className='saveButton' onClick={handleSave}>Sauvegarder</button>
-          <i style={{ marginRight: '20px', fontSize: '20px' }} className="fas fa-cog"></i>
-          <i style={{ marginRight: '20px', fontSize: '20px' }} className="fas fa-share"></i>
-          <i style={{ marginRight: '20px', fontSize: '20px' }} className="fas fa-search"></i>
         </div>
-      </motion.section>
 
-      <div style={{ padding: '20px', background: '#f8eadd', margin: '20px', borderRadius: '20px' }}>
-        <div style={{ marginBottom: '20px' }}>
-          <h1>{selectedBook.title}</h1>
-          <p><strong>Auteur:</strong> {selectedBook.author}</p>
-          <p><strong>Catégorie:</strong> {selectedBook.category}</p>
-          <p><strong>ISBN:</strong> {selectedBook.isbn}</p>
-          <p><strong>Année de publication:</strong> {selectedBook.publication_year}</p>
-          <p><strong>Disponibilité:</strong> {selectedBook.available_copies}/{selectedBook.total_copies} exemplaires</p>
-          <p><strong>Description:</strong> {selectedBook.description}</p>
+        {/* Description et détails */}
+        <div style={{ padding: '32px 32px 16px 32px', background: '#f8fafc', borderBottom: '1px solid #f3f3f3' }}>
+          <h3 style={{ fontSize: 20, margin: '0 0 12px 0', color: '#222' }}>À propos du livre</h3>
+          <p style={{ fontSize: 16, color: '#444', margin: 0 }}>{selectedBook.description || <span style={{ color: '#aaa' }}>Aucune description disponible.</span>}</p>
         </div>
-      </div>
 
-      <Editor
-        htmlContent={`<main className='bookContainer'>
-          <aside>
-            <h1 className="center">${selectedBook.title}</h1>
-            <span className='center small'> Par ${selectedBook.author}</span>
-            <div style="margin-top: 20px;">
-              <p><strong>Catégorie:</strong> ${selectedBook.category}</p>
-              <p><strong>Description:</strong> ${selectedBook.description || 'Aucune description disponible'}</p>
-              <br>
-              <p>Contenu du livre à venir...</p>
-            </div>
-          </aside>
-        </main>`}
-      />
+        {/* Section avis lecteurs */}
+        <div style={{ padding: '32px', background: '#fff', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
+          <h3 style={{ fontSize: 20, margin: '0 0 18px 0', color: '#222' }}>Avis des lecteurs</h3>
+          {selectedBook && (
+            <BookReviews bookId={selectedBook.id} />
+          )}
+        </div>
 
-      {/* Avis des lecteurs */}
-      {selectedBook && (
-        <BookReviews bookId={selectedBook.id} />
-      )}
-
-      <ToastContainer />
-    </motion.div>
+        <ToastContainer />
+      </motion.div>
+    </div>
   );
 };
 

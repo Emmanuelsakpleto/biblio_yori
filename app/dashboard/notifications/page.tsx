@@ -22,8 +22,9 @@ export default function NotificationsPage() {
       setError(null);
       const response = await notificationService.getMyNotifications();
       if (response.success && response.data) {
-        if (Array.isArray(response.data)) setNotifications(response.data);
-        else if (Array.isArray(response.data.notifications)) setNotifications(response.data.notifications);
+        // Typage strict : la réponse doit être un tableau de Notification
+        const data = response.data as Notification[];
+        if (Array.isArray(data)) setNotifications(data);
         else setNotifications([]);
       } else {
         setNotifications([]);

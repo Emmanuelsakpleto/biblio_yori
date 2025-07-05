@@ -1,32 +1,25 @@
 "use client";
-import { useEffect, useState } from 'react';
+
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import ProtectedRoute from '../../../components/ProtectedRoute';
 
-interface Book {
-  id: number;
-  title: string;
-}
-
 export default function AddReviewPage() {
   const { token } = useAuth();
-  const [books, setBooks] = useState<Book[]>([]);
-  const [bookId, setBookId] = useState('');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const bookId = searchParams.get('bookId');
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    async function fetchBooks() {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setBooks(data);
-    }
-    fetchBooks();
-  }, [token]);
+  if (!bookId) {
+    // Redirige si pas d'id de livre
+    if (typeof window !== 'undefined') router.replace('/books');
+    return <div style={{ textAlign: 'center', marginTop: 40 }}>Aucun livre sélectionné.</div>;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,16 +49,6 @@ export default function AddReviewPage() {
           <h2 className="center">Ajouter un avis</h2>
           {message && <div style={{ color: 'green', marginBottom: 12 }}>{message}</div>}
           <form onSubmit={handleSubmit}>
-            <label>
-              Livre :
-              <select value={bookId} onChange={e => setBookId(e.target.value)} required style={{ marginLeft: 8 }}>
-                <option value="">Choisir un livre</option>
-                {books.map(b => (
-                  <option key={b.id} value={b.id}>{b.title}</option>
-                ))}
-              </select>
-            </label>
-            <br /><br />
             <label>
               Note :
               <select value={rating} onChange={e => setRating(Number(e.target.value))} style={{ marginLeft: 8 }}>

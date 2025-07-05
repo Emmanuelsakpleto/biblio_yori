@@ -39,8 +39,9 @@ const Header = () => {
     notificationService.getMyNotifications()
       .then(res => {
         if (res.success && res.data) {
-          if (Array.isArray(res.data)) setNotifications(res.data);
-          else if (Array.isArray(res.data.notifications)) setNotifications(res.data.notifications);
+          // Typage strict : la réponse doit être un tableau de Notification
+          const data = res.data as Notification[];
+          if (Array.isArray(data)) setNotifications(data);
           else setNotifications([]);
         } else {
           setNotifications([]);

@@ -37,9 +37,12 @@ export default function LoansPage() {
           limit: 20
         });
         if (response.success && response.data) {
-          if (Array.isArray(response.data.loans)) {
-            setLoans(response.data.loans);
-            setTotalPages(response.data.pagination?.totalPages || 1);
+          // Typage strict : on vérifie la structure attendue
+          type LoansAdminResponse = { loans: Loan[]; pagination?: { totalPages?: number } };
+          const data = response.data as LoansAdminResponse;
+          if (Array.isArray(data.loans)) {
+            setLoans(data.loans);
+            setTotalPages(data.pagination?.totalPages || 1);
           } else {
             setLoans([]);
             setTotalPages(1);
@@ -48,10 +51,10 @@ export default function LoansPage() {
       } else {
         response = await loanService.getMyLoans();
         if (response.success && response.data) {
-          if (Array.isArray(response.data)) {
-            setLoans(response.data);
-          } else if (Array.isArray(response.data.loans)) {
-            setLoans(response.data.loans);
+          // Typage strict : la réponse doit être un tableau de Loan
+          const data = response.data as Loan[];
+          if (Array.isArray(data)) {
+            setLoans(data);
           } else {
             setLoans([]);
           }

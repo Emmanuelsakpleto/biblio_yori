@@ -14,7 +14,11 @@ export default function BookReviews({ bookId }: BookReviewsProps) {
   useEffect(() => {
     setLoading(true);
     reviewService.getBookReviews(bookId)
-      .then(res => setReviews(res.data?.reviews || res.data || []))
+      .then(res => {
+        // Typage strict : la réponse doit être un tableau de Review
+        const data = res.data as Review[];
+        setReviews(Array.isArray(data) ? data : []);
+      })
       .catch(() => setError('Erreur lors du chargement des avis'))
       .finally(() => setLoading(false));
   }, [bookId]);
