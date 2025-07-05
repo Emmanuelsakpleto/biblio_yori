@@ -685,6 +685,26 @@ export const reviewService = {
     return authenticatedFetch(`/reviews/${reviewId}`, {
       method: 'DELETE'
     });
+  },
+
+  async approveReview(reviewId: number): Promise<ApiResponse<void>> {
+    return authenticatedFetch(`/reviews/${reviewId}/moderate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ 
+        action: 'approve', 
+        reason: 'Avis approuvé par l\'administrateur' 
+      })
+    });
+  },
+
+  async rejectReview(reviewId: number): Promise<ApiResponse<void>> {
+    return authenticatedFetch(`/reviews/${reviewId}/moderate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ 
+        action: 'reject', 
+        reason: 'Avis rejeté par l\'administrateur' 
+      })
+    });
   }
 };
 

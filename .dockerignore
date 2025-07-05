@@ -1,0 +1,113 @@
+# Dépendances
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build Next.js
+.next/
+out/
+build/
+dist/
+
+# Fichiers d'environnement
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.example
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage et tests
+coverage/
+nyc_output/
+.nyc_output
+jest/
+__tests__/
+test/
+*.test.js
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.ts
+*.spec.tsx
+
+# Documentation
+docs/
+README.md
+README_PROF.md
+README_COMPLET.md
+README_FINAL.md
+CRUD_BOOKS_IMPLEMENTATION.md
+*.md
+
+# IDEs et éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Fichiers temporaires
+temp/
+tmp/
+*.tmp
+
+# OS spécifiques
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Fichiers de développement
+.eslintrc.json
+.prettierrc
+*.config.js
+*.config.mjs
+tsconfig.json
+next-env.d.ts
+
+# Storybook
+.storybook/
+storybook-static/
+
+# TypeScript
+*.tsbuildinfo
+
+# Vercel
+.vercel
+
+# Turbo
+.turbo
+
+# Cache
+.cache/
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Fichiers de styles de backup
+globals.css.backup
+*.tsx.old

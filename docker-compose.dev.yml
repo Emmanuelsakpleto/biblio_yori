@@ -1,0 +1,29 @@
+# Docker Compose pour développement Frontend YORI
+version: '3.8'
+
+services:
+  # Frontend Next.js en mode développement
+  yori-frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    container_name: yori-frontend-dev
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:5000
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      NEXT_TELEMETRY_DISABLED: 1
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+    networks:
+      - yori-network
+
+networks:
+  yori-network:
+    external: true

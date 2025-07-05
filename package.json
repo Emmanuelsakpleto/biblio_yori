@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker:build": "docker build -t yori-frontend .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env.local yori-frontend",
+    "docker:stop": "docker stop $(docker ps -q --filter ancestor=yori-frontend)",
+    "docker:clean": "docker system prune -f",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up --build"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
