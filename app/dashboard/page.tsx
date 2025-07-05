@@ -43,7 +43,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboardData();
+    if (user) {
+      loadDashboardData();
+    }
   }, [user]);
 
   const loadDashboardData = async () => {
@@ -92,9 +94,12 @@ export default function DashboardPage() {
 
   const loadAdminDashboard = async () => {
     try {
+      // Pour le moment, on utilise directement le fallback qui est plus fiable
+      console.log('Chargement des données admin via APIs individuelles...');
+      
       // Livres
-      const booksResponse = await bookService.getBooks({ limit: 1 });
-      const totalBooks = booksResponse.data?.total || 0;
+      const booksResponse = await bookService.getBooks({ page: 1, limit: 1000 });
+      const totalBooks = booksResponse.data?.total || booksResponse.data?.books?.length || 0;
 
       // Emprunts
       const loansResponse = await loanService.getAllLoans();
@@ -110,6 +115,8 @@ export default function DashboardPage() {
       const notificationsResponse = await notificationService.getMyNotifications();
       const unreadNotifications = notificationsResponse.data?.notifications?.filter((n: any) => !n.is_read).length || 0;
 
+      console.log('Stats chargées:', { totalBooks, activeLoans, overdueLoans, totalUsers, unreadNotifications });
+
       setAdminStats({
         totalBooks,
         activeLoans,
@@ -120,6 +127,19 @@ export default function DashboardPage() {
 
     } catch (error) {
       console.error('Erreur lors du chargement des données admin:', error);
+      // En cas d'erreur, au moins charger quelques données de base
+      try {
+        console.log('Tentative de chargement minimal...');
+        const booksResponse = await bookService.getBooks({ page: 1, limit: 100 });
+        const totalBooks = booksResponse.data?.total || booksResponse.data?.books?.length || 0;
+
+        setAdminStats(prev => ({
+          ...prev,
+          totalBooks
+        }));
+      } catch (fallbackError) {
+        console.error('Erreur fallback:', fallbackError);
+      }
     }
   };
 
