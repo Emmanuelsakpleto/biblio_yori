@@ -11,30 +11,52 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    setPage(1);
+    setHasMore(true);
+    fetchNotifications(1, true);
+    // eslint-disable-next-line
+  }, [filter]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (pageToFetch = 1, reset = false) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await notificationService.getMyNotifications();
+      // Ajout des options de filtrage côté backend si besoin
+      const response = await notificationService.getMyNotifications({
+        limit: PAGE_SIZE,
+        offset: (pageToFetch - 1) * PAGE_SIZE,
+        unread_only: filter === 'unread',
+        type: '',
+        priority: ''
+      });
       if (response.success && response.data) {
-        // Typage strict : la réponse doit être un tableau de Notification
         const data = response.data as Notification[];
-        if (Array.isArray(data)) setNotifications(data);
-        else setNotifications([]);
+        if (reset) setNotifications(data);
+        else setNotifications(prev => [...prev, ...data]);
+        setHasMore((data.length || 0) === PAGE_SIZE);
       } else {
-        setNotifications([]);
+        if (reset) setNotifications([]);
+        setHasMore(false);
         setError(response.message || 'Erreur lors du chargement des notifications');
       }
     } catch (err) {
       setError('Erreur lors du chargement des notifications');
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchNotifications(nextPage);
   };
 
   const handleMarkAsRead = async (notificationId: number) => {
@@ -61,20 +83,7 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleDelete = async (notificationId: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
-      return;
-    }
-    
-    try {
-      const response = await notificationService.deleteNotification(notificationId);
-      if (response.success) {
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      }
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
-    }
-  };
+  // Suppression désactivée : la suppression de notification n'est plus disponible côté backend.
 
   const getNotificationTypeText = (type: string) => {
     switch (type) {
@@ -119,30 +128,69 @@ export default function NotificationsPage() {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  // Correction robustesse : notifications peut être un objet (backend paginé)
+  const notificationList = Array.isArray(notifications)
+    ? notifications
+    : (notifications && Array.isArray(notifications.notifications))
+      ? notifications.notifications
+      : [];
+
+  const unreadCount = notificationList.filter(n => !n.is_read).length;
+
+  const filteredNotifications = notificationList.filter(n => {
+    if (filter === 'unread') return !n.is_read;
+    if (filter === 'read') return n.is_read;
+    return true;
+  });
 
   return (
     <ProtectedRoute>
-      <main className="bookContainer">
+      <main className="bookContainer" style={{ maxWidth: 700, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px #0001', padding: 32 }}>
         <aside>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 className="center" style={{ margin: 0 }}>Mes notifications</h2>
+            <h2 className="center" style={{ margin: 0, fontWeight: 700, fontSize: 28, letterSpacing: 1 }}>Notifications administrateur</h2>
             {unreadCount > 0 && (
               <span style={{
-                background: '#ff4444',
+                background: 'linear-gradient(90deg,#ff4444,#ff8800)',
                 color: 'white',
                 borderRadius: '50%',
-                width: '24px',
-                height: '24px',
+                width: '28px',
+                height: '28px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '12px',
-                fontWeight: 'bold'
+                fontSize: '14px',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 8px #ff444444'
               }}>
                 {unreadCount}
               </span>
             )}
+          </div>
+
+          {/* Filtres d'affichage */}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', justifyContent: 'center' }}>
+            <button
+              className={filter === 'all' ? 'saveButton' : ''}
+              style={{ background: filter === 'all' ? '#4488ff' : '#eee', color: filter === 'all' ? 'white' : '#333', border: 'none', padding: '8px 18px', borderRadius: '8px', fontWeight: 600, fontSize: 15 }}
+              onClick={() => setFilter('all')}
+            >
+              Toutes
+            </button>
+            <button
+              className={filter === 'unread' ? 'saveButton' : ''}
+              style={{ background: filter === 'unread' ? '#44aa44' : '#eee', color: filter === 'unread' ? 'white' : '#333', border: 'none', padding: '8px 18px', borderRadius: '8px', fontWeight: 600, fontSize: 15 }}
+              onClick={() => setFilter('unread')}
+            >
+              Non lues
+            </button>
+            <button
+              className={filter === 'read' ? 'saveButton' : ''}
+              style={{ background: filter === 'read' ? '#aaa' : '#eee', color: filter === 'read' ? 'white' : '#333', border: 'none', padding: '8px 18px', borderRadius: '8px', fontWeight: 600, fontSize: 15 }}
+              onClick={() => setFilter('read')}
+            >
+              Lues
+            </button>
           </div>
           
           <p className="small">
@@ -190,7 +238,7 @@ export default function NotificationsPage() {
             </div>
           ) : (
             <div>
-              {notifications.map(notification => (
+              {filteredNotifications.map(notification => (
                 <div 
                   key={notification.id} 
                   style={{ 
@@ -263,23 +311,22 @@ export default function NotificationsPage() {
                         </button>
                       )}
                       
-                      <button
-                        onClick={() => handleDelete(notification.id)}
-                        className="saveButton"
-                        style={{
-                          background: '#ff4444',
-                          color: 'white',
-                          border: 'none',
-                          padding: '4px 8px',
-                          fontSize: '10px'
-                        }}
-                      >
-                        Supprimer
-                      </button>
+                      {/* Suppression désactivée : bouton supprimé */}
                     </div>
                   </div>
                 </div>
               ))}
+              {hasMore && !loading && (
+                <div style={{ textAlign: 'center', margin: '24px 0' }}>
+                  <button
+                    onClick={handleLoadMore}
+                    className="saveButton"
+                    style={{ background: '#4488ff', color: 'white', border: 'none', padding: '10px 32px', borderRadius: 8, fontWeight: 600, fontSize: 16 }}
+                  >
+                    Charger plus
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </aside>

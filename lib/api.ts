@@ -537,7 +537,7 @@ export const notificationService = {
 
   async markAsRead(notificationId: number): Promise<ApiResponse<void>> {
     return authenticatedFetch(`/notifications/${notificationId}/read`, {
-      method: 'PUT'
+      method: 'PATCH'
     });
   },
 
@@ -547,11 +547,7 @@ export const notificationService = {
     });
   },
 
-  async deleteNotification(notificationId: number): Promise<ApiResponse<void>> {
-    return authenticatedFetch(`/notifications/${notificationId}`, {
-      method: 'DELETE'
-    });
-  }
+  // Suppression désactivée côté backend, méthode retirée.
 };
 
 // Services des avis
