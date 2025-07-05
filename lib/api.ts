@@ -706,6 +706,37 @@ export const adminService = {
     }
     const query = params.toString();
     return authenticatedFetch(`/admin/users${query ? `?${query}` : ''}`);
+  },
+
+  async updateUser(userId: number, updates: Partial<UserProfile>): Promise<ApiResponse<UserProfile>> {
+    return authenticatedFetch(`/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+  },
+
+  async resetUserPassword(userId: number, sendNotification = true): Promise<ApiResponse<{ message: string }>> {
+    return authenticatedFetch(`/admin/users/${userId}/password`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        new_password: 'motdepasse123', // Mot de passe par défaut
+        send_notification: sendNotification 
+      })
+    });
+  },
+
+  async toggleUserStatus(userId: number, isActive: boolean, reason?: string): Promise<ApiResponse<UserProfile>> {
+    return authenticatedFetch(`/admin/users/${userId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: isActive, reason })
+    });
+  },
+
+  async getUserById(userId: number): Promise<ApiResponse<UserProfile>> {
+    return authenticatedFetch(`/admin/users/${userId}`);
   }
 };
 

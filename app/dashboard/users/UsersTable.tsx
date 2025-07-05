@@ -5,9 +5,11 @@ import { utils } from '../../../lib/api';
 interface UsersTableProps {
   users: UserProfile[];
   onUserUpdate: (userId: number, updates: Partial<UserProfile>) => void;
+  onResetPassword: (userId: number) => void;
+  onViewProfile: (userId: number) => void;
 }
 
-export default function UsersTable({ users, onUserUpdate }: UsersTableProps) {
+export default function UsersTable({ users, onUserUpdate, onResetPassword, onViewProfile }: UsersTableProps) {
   const [editingUser, setEditingUser] = useState<number | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState<{
     userId: number;
@@ -364,18 +366,27 @@ export default function UsersTable({ users, onUserUpdate }: UsersTableProps) {
                           <button
                             className="saveButton"
                             style={{ background: '#3b82f6', fontSize: '12px' }}
+                            onClick={() => onViewProfile(userItem.id)}
                           >
                             👁️ Voir le profil
                           </button>
                           <button
                             className="saveButton"
                             style={{ background: '#8b5cf6', fontSize: '12px' }}
+                            onClick={() => {
+                              // TODO: Implémenter la vue d'activité
+                              alert('Fonctionnalité à venir : Vue de l\'activité utilisateur');
+                            }}
                           >
                             📈 Voir l'activité
                           </button>
                           <button
                             className="saveButton"
                             style={{ background: '#10b981', fontSize: '12px' }}
+                            onClick={() => {
+                              setEditingUser(null);
+                              onResetPassword(userItem.id);
+                            }}
                           >
                             🔄 Réinitialiser mot de passe
                           </button>

@@ -105,16 +105,49 @@ export default function UsersDashboardPage() {
 
   const handleUserUpdate = async (userId: number, updates: Partial<UserProfile>) => {
     try {
-      // Ici vous devrez implémenter la logique de mise à jour via votre API
-      setUsers(prev => prev.map(u => 
-        u.id === userId ? { ...u, ...updates } : u
-      ));
+      let response;
       
-      setShowSuccess('Utilisateur mis à jour avec succès');
-      setTimeout(() => setShowSuccess(null), 3000);
+      // Utiliser la méthode appropriée selon le type de mise à jour
+      if ('is_active' in updates) {
+        response = await adminService.toggleUserStatus(userId, updates.is_active!);
+      } else {
+        response = await adminService.updateUser(userId, updates);
+      }
+      
+      if (response.success) {
+        // Mettre à jour l'état local seulement si l'API a réussi
+        setUsers(prev => prev.map(u => 
+          u.id === userId ? { ...u, ...updates } : u
+        ));
+        
+        setShowSuccess('Utilisateur mis à jour avec succès');
+        setTimeout(() => setShowSuccess(null), 3000);
+      } else {
+        setError('Erreur lors de la mise à jour de l\'utilisateur');
+      }
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error);
+      setError('Erreur lors de la mise à jour de l\'utilisateur');
     }
+  };
+
+  const handleResetPassword = async (userId: number) => {
+    try {
+      const response = await adminService.resetUserPassword(userId);
+      if (response.success) {
+        setShowSuccess('Mot de passe réinitialisé avec succès');
+        setTimeout(() => setShowSuccess(null), 3000);
+      } else {
+        setError('Erreur lors de la réinitialisation du mot de passe');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la réinitialisation:', error);
+      setError('Erreur lors de la réinitialisation du mot de passe');
+    }
+  };
+
+  const handleViewProfile = (userId: number) => {
+    router.push(`/dashboard/users/${userId}`);
   };
 
   const resetFilters = () => {
@@ -393,6 +426,8 @@ export default function UsersDashboardPage() {
             <UsersTable 
               users={filteredUsers} 
               onUserUpdate={handleUserUpdate}
+              onResetPassword={handleResetPassword}
+              onViewProfile={handleViewProfile}
             />
           )}
         </aside>
